@@ -15,9 +15,9 @@ The editable Blender model and web GLB are complete. This is an original miniatu
 
 Worktree: `/Users/kene/code/wattwhen-home-assets`  
 Branch: `codex/wattwhen-home-assets`  
-Base: winning WattWhen implementation on `claude/build`, commit `54078732efa8b2e9686f1990f6a87dee2ee24f86`.
+Base: winning WattWhen implementation; `main` and `claude/build` both resolve to `cda5b18` at integration time.
 
-The React component and application source are unchanged. Nothing was merged, pushed or deployed. The app at port 3001 remains the reference for the next integration step.
+The asset is now integrated into the Claude/main application in this separate worktree. The original project and port 3001 are unchanged. Nothing was merged, pushed or deployed. The integrated preview runs at http://localhost:3109/.
 
 ## Runtime properties
 
@@ -109,7 +109,7 @@ Change `material.emissiveIntensity`; the colour is already present. Animate inte
 - Checked scene counts, finite geometry, semantic names, file size and triangle budget; no external textures, runtime lights or cameras.
 - Captured browser exterior, cutaway and night views.
 
-The preview uses 144 asset material primitives; its displayed 289 draw calls include the shadow pass and preview ground. Performance on target mobile hardware and final dashboard labels, framing, energy flows and schedule callbacks still require validation during React integration. No application build was needed because application source was not edited.
+The preview uses 144 asset material primitives; its displayed 289 draw calls include the shadow pass and preview ground. Performance on target mobile hardware and final dashboard labels, framing, energy flows and schedule callbacks still require validation during React integration. React integration passed TypeScript, ESLint for changed components, and `npm run build -- --webpack`. Browser checks covered setup switches, appliance selection, cutaway, night view and resetting the camera. The new controls respect reduced motion; the house area adapts for a small screen.
 
 To view the standalone preview from this asset directory:
 
@@ -120,3 +120,7 @@ python3 runtime/serve_preview.py --three-root /Users/kene/code/wattwhen/node_mod
 Open `http://localhost:3108/`. This serves only this asset folder and the supplied local Three.js library. It does not modify or run the WattWhen app.
 
 The `work/` scripts document modelling, review, export and validation. `build_home.py` and `add_details.py` are sequential Blender-console passes; the detail pass shares helpers from the first. The exporter can be run against `checkpoints/03-reviewed-home.blend`. Adjust its output paths before rebuilding in a different checkout. Re-run `node work/validate_asset.mjs /path/to/node_modules/three` after any export change.
+
+## React integration
+
+`src/components/House3D.tsx` now loads the GLB, owns cloned materials for independent highlights, binds setup visibility and appliance selection to the existing planner, exposes Look inside / Exterior and Day / Night controls, and updates the equipment energy particles. `src/app/page.tsx` reserves more room for the scene and controls on narrow screens. The existing planning, tariff, chat and timeline logic is retained. The worktree uses existing local dependencies; use `npm run dev -- --webpack --port 3109` for this preview.

@@ -110,7 +110,7 @@
     "noLightsOrCameras": true,
     "noExternalTextures": true
   },
-  "integrationStatus": "Asset only. Existing React component unchanged; final app camera and interaction wiring need integration validation in a new worktree/branch.",
+  "integrationStatus": "Integrated into the Claude/main React app on isolated branch codex/wattwhen-home-assets. Build, changed-file lint and browser interaction checks pass. Not merged, pushed or deployed.",
   "sourceEvaluatedVertices": 55866,
   "bounds": {
     "min": [

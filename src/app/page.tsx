@@ -232,7 +232,7 @@ export default function Home() {
         </header>
 
         <section className="grid grid-cols-12 gap-4">
-          <div className="relative col-span-12 h-[520px] overflow-hidden rounded-lg border border-line bg-panel lg:col-span-8">
+          <div className="relative col-span-12 h-[760px] min-[760px]:h-[520px] overflow-hidden rounded-lg border border-line bg-panel lg:col-span-8">
             <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
             <div className="absolute z-10 left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
@@ -285,7 +285,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <div className="absolute z-10 bottom-4 left-4 flex items-baseline gap-4 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
+            <div className="absolute z-10 bottom-4 left-4 flex max-w-[calc(100%-2rem)] flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
               <span className="text-muted">Grid now</span>
               <span>
                 <span className="font-mono text-base">{nowSlot?.co2 ?? "–"}</span> <span className="text-muted">gCO2/kWh</span>
