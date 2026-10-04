@@ -57,7 +57,7 @@ function Model({ config, cutaway, night, selected, onSelect }: {
       const { material, emission, intensity, id } = entry;
       material.emissive.copy(emission);
       material.emissiveIntensity = NIGHT[material.name]?.[night ? 1 : 0] ?? intensity;
-      if (id && id === selected) { material.emissive.set("#9bbd85"); material.emissiveIntensity = .24; }
+      if (id && id === selected) { material.emissive.set("#ffa21f"); material.emissiveIntensity = .75; }
     }
     invalidate();
   }, [model, config, cutaway, night, selected, invalidate]);
