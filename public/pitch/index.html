@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WattWhen · Build for Ireland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111214; --panel: #17181b; --line: #26282d; --fg: #e8e6e1; --muted: #8b8d93;
+    --best: #7bd88f; --sun: #e3b341; --usual: #e0705c; --wind: #8fb3d9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #0b0c0d; color: var(--fg); font-family: "IBM Plex Sans", system-ui, sans-serif; overflow: hidden; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  /* Fixed 1600×900 canvas, scaled to fit the window */
+  .stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; }
+  .slide { position: absolute; inset: 0; background: var(--bg); padding: 72px 88px 64px; display: none; flex-direction: column; }
+  .slide.active { display: flex; }
+  .kicker { font-size: 18px; color: var(--muted); letter-spacing: .02em; margin-bottom: 14px; }
+  h1 { font-size: 52px; font-weight: 600; line-height: 1.12; letter-spacing: -.01em; max-width: 1280px; }
+  h1 em { font-style: normal; color: var(--best); }
+  .foot { position: absolute; left: 88px; right: 88px; bottom: 32px; display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
+  .src { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: auto; }
+  .tag { color: var(--usual); }
+
+  /* Slide 1: stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 56px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 28px 26px 26px; min-height: 250px; display: flex; flex-direction: column; }
+  .stat .n { font-family: "IBM Plex Mono", monospace; font-size: 50px; font-weight: 500; line-height: 1.05; letter-spacing: -.02em; }
+  .stat .l { margin-top: 18px; font-size: 19px; line-height: 1.45; color: var(--fg); }
+  .stat .s { margin-top: auto; padding-top: 14px; font-size: 14px; color: var(--muted); }
+  .lead { margin-top: 36px; font-size: 22px; line-height: 1.5; color: var(--muted); max-width: 1180px; }
+  .lead b { color: var(--fg); font-weight: 500; }
+
+  /* Slide 2: solution */
+  .split { display: grid; grid-template-columns: 500px 1fr; gap: 48px; margin-top: 40px; flex: 1; min-height: 0; }
+  .points { display: flex; flex-direction: column; gap: 22px; }
+  .pt { display: grid; grid-template-columns: 28px 1fr; gap: 14px; font-size: 19px; line-height: 1.45; }
+  .pt .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--best); margin-top: 9px; }
+  .pt b { font-weight: 500; }
+  .pt span { color: var(--muted); }
+  .shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; align-self: start; }
+  .shot img { display: block; width: 100%; }
+  .url { margin-top: 26px; font-size: 18px; }
+  .url .mono { color: var(--best); }
+
+  /* Slide 3: data */
+  .data { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 48px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 26px 28px; }
+  .card h3 { font-size: 23px; font-weight: 500; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .card h3 small { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 400; padding: 3px 9px; border-radius: 5px; border: 1px solid var(--line); white-space: nowrap; }
+  .live { color: var(--best); } .est { color: var(--sun); } .smp { color: var(--muted); }
+  .card p { margin-top: 12px; font-size: 18px; line-height: 1.5; color: var(--muted); }
+  .card p b { color: var(--fg); font-weight: 500; }
+
+  /* Slide 4: OpenAI */
+  .ai { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 48px; }
+  .ai .card { padding: 30px 32px; }
+  .ai .card h3 { font-size: 28px; }
+  .ai ul { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .ai li { font-size: 19px; line-height: 1.45; color: var(--muted); padding-left: 22px; position: relative; }
+  .ai li::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 8px; border-radius: 50%; background: var(--best); }
+  .ai li b { color: var(--fg); font-weight: 500; }
+  .note { margin-top: 26px; font-size: 16px; color: var(--muted); }
+
+  /* Slide 5: team */
+  .team { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 56px; }
+  .person { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 32px; min-height: 220px; display: flex; flex-direction: column; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-family: "IBM Plex Mono", monospace; font-size: 22px; color: var(--best); background: var(--bg); }
+  .person .name { margin-top: 22px; font-size: 26px; font-weight: 500; }
+  .person .role { margin-top: 8px; font-size: 18px; color: var(--muted); line-height: 1.45; }
+  .links { margin-top: 48px; display: flex; gap: 40px; font-size: 20px; }
+  .links span { color: var(--muted); margin-right: 10px; }
+
+  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-bottom: 56px; }
+  .body > .data, .body > .ai, .body > .team { margin-top: 0; }
+  .hint { position: fixed; right: 18px; bottom: 14px; font: 12px "IBM Plex Mono", monospace; color: #55575d; }
+
+  @media print {
+    @page { size: 1600px 900px; margin: 0; }
+    html, body { overflow: visible; background: var(--bg); }
+    .stage { position: static; transform: none !important; }
+    .slide { display: flex !important; position: relative; width: 1600px; height: 900px; page-break-after: always; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- 1. Problem -->
+  <section class="slide active">
+    <div class="kicker">The problem</div>
+    <h1>Ireland's grid changes every hour.<br>Our habits don't.</h1>
+    <div class="stats">
+      <div class="stat">
+        <div class="n" style="color:var(--sun)">108–207</div>
+        <div class="l">gCO2 per kWh on the Irish grid in a single day. Run the same wash at a different hour and its carbon almost doubles.</div>
+        <div class="s">EirGrid, Sun 4 Oct 2026</div>
+      </div>
+      <div class="stat">
+        <div class="n" style="color:var(--wind)">2.7→0.4<span style="font-size:28px"> GW</span></div>
+        <div class="l">Wind tonight vs tomorrow evening. Same night rate, very different grid.</div>
+        <div class="s">EirGrid wind forecast</div>
+      </div>
+      <div class="stat">
+        <div class="n">€1,868</div>
+        <div class="l">A typical urban bill per year (4,200 kWh) on a standard plan.</div>
+        <div class="s">Selectra.ie estimated annual bill</div>
+      </div>
+      <div class="stat">
+        <div class="n" style="color:var(--usual)">48%</div>
+        <div class="l">of homes are on a standard flat-rate plan, and only 1% on a dynamic one, even though every big supplier must offer dynamic tariffs since June 2026.</div>
+        <div class="s"><span class="tag">[add source]</span> · CRU mandate via Bonkers.ie</div>
+      </div>
+    </div>
+    <p class="lead">Most homes run the washing, charge the car and heat water at the same times every day. <b>Nobody tells them when the cheap, clean hours are.</b></p>
+    <div class="foot"><span>WattWhen · Build for Ireland</span><span class="mono">1 / 5</span></div>
+  </section>
+
+  <!-- 2. Solution + demo -->
+  <section class="slide">
+    <div class="kicker">The solution</div>
+    <h1>Don't change what you use. <em>Change when.</em></h1>
+    <div class="split">
+      <div>
+        <div class="points">
+          <div class="pt"><div class="dot"></div><div><b>Best window for every appliance</b><br><span>Live grid data finds the cheapest, cleanest slot and shows the € and CO2 saved against your usual time.</span></div></div>
+          <div class="pt"><div class="dot"></div><div><b>Cost, carbon or both</b><br><span>You choose what matters. The windows move with it.</span></div></div>
+          <div class="pt"><div class="dot"></div><div><b>Honest on a flat rate</b><br><span>Timing saves €0 on a flat plan, and we say so. Then we show what a smart plan would save you.</span></div></div>
+          <div class="pt"><div class="dot"></div><div><b>EV, solar and battery homes</b><br><span>Charging windows that meet a deadline, and a solar year showing when the grid pays you.</span></div></div>
+          <div class="pt"><div class="dot"></div><div><b>Ask in plain English</b><br><span>"My car needs 80% by 8am" gets a plan from the same live data.</span></div></div>
+        </div>
+        <p class="url">Live demo: <span class="mono">wattwhen-nine.vercel.app</span></p>
+      </div>
+      <div class="shot"><img src="app.png" alt="WattWhen dashboard: 3D home with the EV highlighted, best windows per appliance, and a 36-hour grid carbon timeline"></div>
+    </div>
+    <div class="foot"><span>Example: EV plugged in at 01:30, not 18:30 · saves €5.70 and 378 g CO2 (sample tariff)</span><span class="mono">2 / 5</span></div>
+  </section>
+
+  <!-- 3. Datasets -->
+  <section class="slide">
+    <div class="kicker">Data</div>
+    <h1>Built on Irish public data, live</h1>
+    <div class="body">
+    <div class="data">
+      <div class="card">
+        <h3>EirGrid Smart Grid Dashboard <small class="live">LIVE · 15 MIN</small></h3>
+        <p><b>Grid CO2 intensity</b> (gCO2/kWh) and the <b>36-hour wind forecast</b>. EirGrid publishes no CO2 forecast, so we fit one from the wind forecast and label it an estimate.</p>
+      </div>
+      <div class="card">
+        <h3>Met Éireann open forecast API <small class="live">LIVE · HOURLY</small></h3>
+        <p><b>Solar radiation</b> (W/m²) for the next 48 hours from the HARMONIE model, turned into each home's solar output.</p>
+      </div>
+      <div class="card">
+        <h3>PVGIS, EU Joint Research Centre <small class="live">LIVE</small></h3>
+        <p><b>Monthly solar output</b> for any location, roof tilt and direction. Powers the solar year and the export credit.</p>
+      </div>
+      <div class="card">
+        <h3>Tariffs and households <small class="smp">SAMPLE · SYNTHETIC</small></h3>
+        <p><b>Flat, smart time-of-use and EV tariff structures</b> with sample rates, and synthetic household profiles. Next: real rates read from a photo of your bill.</p>
+      </div>
+    </div>
+    <p class="src" style="margin-top:28px">Every number on screen is labelled as data, estimate or AI. If a feed fails, the app falls back to a dated sample and says so.</p>
+    </div>
+    <div class="foot"><span>WattWhen · Build for Ireland</span><span class="mono">3 / 5</span></div>
+  </section>
+
+  <!-- 4. Use of OpenAI -->
+  <section class="slide">
+    <div class="kicker">Use of OpenAI</div>
+    <h1>GPT-6 Astra built the house. Codex built alongside us.</h1>
+    <div class="body">
+    <div class="ai">
+      <div class="card">
+        <h3>GPT-6 Astra</h3>
+        <ul>
+          <li><b>Modelled the home in Blender</b> through computer use: a semi-d with solar, EV, battery, heat pump and every appliance.</li>
+          <li><b>Exported an interactive 3D asset</b> (GLB) with selectable appliances, a cutaway interior and night lighting.</li>
+          <li>Kept an <b>editable .blend source</b> and render reviews in the repo.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Codex</h3>
+        <ul>
+          <li><b>Built a parallel version</b> of the app: sourced grid forecasts and deterministic household planning.</li>
+          <li><b>Wrote tests</b> for the energy calculations and the desktop and mobile demo flows.</li>
+          <li><b>Integrated the Blender home</b> into the dashboard and polished the UI.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Also used: Claude Code for the main build, and Claude Haiku 4.5 for the in-app assistant, which calls our tools and never does the maths.</p>
+    </div>
+    <div class="foot"><span>WattWhen · Build for Ireland</span><span class="mono">4 / 5</span></div>
+  </section>
+
+  <!-- 5. Contributors -->
+  <section class="slide">
+    <div class="kicker">Team</div>
+    <h1>Contributors</h1>
+    <div class="body">
+    <div class="team">
+      <div class="person"><div class="avatar">KC</div><div class="name">Kene Chukwu</div><div class="role">Final-year CS, UCD · <span class="tag">[role]</span></div></div>
+      <div class="person"><div class="avatar">–</div><div class="name"><span class="tag">[Teammate 2]</span></div><div class="role"><span class="tag">[role]</span></div></div>
+      <div class="person"><div class="avatar">–</div><div class="name"><span class="tag">[Teammate 3]</span></div><div class="role"><span class="tag">[role]</span></div></div>
+    </div>
+    <div class="links">
+      <div><span>Live</span><span class="mono" style="color:var(--best);margin:0">wattwhen-nine.vercel.app</span></div>
+      <div><span>Code</span><span class="mono" style="color:var(--fg);margin:0">github.com/OpenAIBuildForIreland/wattwhen</span></div>
+    </div>
+    </div>
+    <div class="foot"><span>WattWhen · Build for Ireland 2026</span><span class="mono">5 / 5</span></div>
+  </section>
+
+</div>
+<div class="hint">← → to navigate</div>
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const stage = document.getElementById("stage");
+  let i = 0;
+  const fit = () => {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  };
+  const show = (n) => {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((el, k) => el.classList.toggle("active", k === i));
+    history.replaceState(null, "", "#" + (i + 1));
+  };
+  addEventListener("resize", fit);
+  addEventListener("hashchange", () => show((parseInt(location.hash.slice(1)) || 1) - 1));
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", " ", "PageDown"].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+  });
+  addEventListener("click", (e) => (e.clientX > innerWidth / 3 ? show(i + 1) : show(i - 1)));
+  fit();
+  show((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
