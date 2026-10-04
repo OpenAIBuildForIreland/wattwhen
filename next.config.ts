@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // API routes read dated samples from disk when a live feed fails.
+  outputFileTracingIncludes: {
+    "/api/**": ["./src/data/samples/**"],
+  },
 };
 
 export default nextConfig;
