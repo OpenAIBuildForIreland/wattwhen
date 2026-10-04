@@ -113,6 +113,7 @@ export default function Home() {
   const [year, setYear] = useState<SolarYearData | null>(null);
   const [selected, setSelected] = useState<string | null>("washer");
   const [chatWindows, setChatWindows] = useState<Window[]>([]);
+  const [focusTick, setFocusTick] = useState(0);
 
   const selectPreset = (id: string) => {
     setPresetId(id);
@@ -233,7 +234,7 @@ export default function Home() {
 
         <section className="grid grid-cols-12 gap-4">
           <div className="relative col-span-12 h-[760px] min-[760px]:h-[520px] overflow-hidden rounded-lg border border-line bg-panel lg:col-span-8">
-            <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
+            <House3D config={cfg} hotspots={hotspots} selected={selected} focusTick={focusTick} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
             <div className="absolute z-10 left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium">{presetId === "custom" ? "Custom household" : base.name}</div>
@@ -324,7 +325,10 @@ export default function Home() {
                 return (
                   <button
                     key={w.applianceId}
-                    onClick={() => setSelected(w.applianceId)}
+                    onClick={() => {
+                      setSelected(w.applianceId);
+                      setFocusTick((t) => t + 1);
+                    }}
                     className={`relative block w-full border-b border-line px-4 py-3 text-left last:border-b-0 ${on ? "bg-foreground/[0.04]" : "hover:bg-foreground/[0.02]"}`}
                   >
                     {on && <span className="absolute inset-y-0 left-0 w-0.5 bg-best" />}

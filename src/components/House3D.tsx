@@ -103,9 +103,10 @@ class ModelBoundary extends Component<{ children: ReactNode }, { failed: boolean
   render() { return this.state.failed ? <div role="status" className="flex h-full items-center justify-center p-8 text-center text-sm text-muted">The home couldn’t load. Your energy plan is still available below.</div> : this.props.children; }
 }
 
-export default function House3D({ config, selected, onSelect, sunStrength, gridCo2 }: {
+export default function House3D({ config, selected, focusTick = 0, onSelect, sunStrength, gridCo2 }: {
   config: HouseConfig; hotspots: Hotspot[]; selected: string | null; onSelect: (id: string) => void;
   sunStrength: number; gridCo2: number | null;
+  focusTick?: number; // bumps when a plan card is clicked, even if it was already selected
 }) {
   const [cutaway, setCutaway] = useState(false);
   const [night, setNight] = useState(false);
@@ -113,12 +114,14 @@ export default function House3D({ config, selected, onSelect, sunStrength, gridC
   const reducedMotion = useReducedMotion();
   const { active: loading } = useProgress();
   const previousSelection = useRef(selected);
+  const previousFocus = useRef(focusTick);
   useEffect(() => {
-    if (previousSelection.current !== selected) {
+    if (previousSelection.current !== selected || previousFocus.current !== focusTick) {
       setCutaway(!!selected && INTERIOR.has(selected));
       previousSelection.current = selected;
+      previousFocus.current = focusTick;
     }
-  }, [selected]);
+  }, [selected, focusTick]);
   const choose = (id: string) => { setCutaway(INTERIOR.has(id)); onSelect(id); };
   const gridColor = gridCo2 === null ? "#8fb3d9" : gridCo2 < 150 ? "#9ac88b" : gridCo2 < 250 ? "#d9b44a" : "#d4685c";
   const controlsClass = "flex min-h-9 items-center gap-1.5 rounded-md border border-line bg-background/90 px-2.5 text-xs text-foreground backdrop-blur-sm hover:border-foreground/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-best";
