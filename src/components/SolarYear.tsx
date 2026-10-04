@@ -33,10 +33,13 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
   const yb = (v: number) => top + ch - ((v - bmin) / Math.max(1, bmax - bmin)) * ch;
   const order = [3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2];
   const line = order.map((mi, k) => `${k ? "L" : "M"}${(k + 0.5) * gw},${yb(-data.months[mi].netEUR)}`).join(" ");
+  const summary = `Estimated annual solar generation is ${Math.round(data.totals.genKWh).toLocaleString()} kilowatt-hours. Estimated export credit is €${data.totals.exportEUR.toFixed(0)}.`;
 
   return (
     <div ref={ref} className="w-full">
-      <svg width={w} height={H} className="block overflow-visible">
+      <p id="solar-year-summary" className="sr-only">{summary}</p>
+      <svg width={w} height={H} className="block overflow-visible" role="img" aria-labelledby="solar-year-title solar-year-summary">
+        <title id="solar-year-title">Solar generation, household use and bill forecast by month</title>
         <line x1={0} x2={w} y1={yb(0)} y2={yb(0)} stroke="rgba(148,163,184,0.25)" strokeDasharray="4 4" />
         {order.map((mi, i) => {
           const m = data.months[mi];

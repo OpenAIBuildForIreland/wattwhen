@@ -88,10 +88,14 @@ export default function Timeline({
   const ticks = slots.filter((s) => new Date(s.start).getUTCMinutes() === 0 && Date.parse(s.start) % (3 * 3600 * 1000) === 0);
   const sel = windows.find((wd) => wd.applianceId === selected);
   const hs = hover !== null ? slots[hover] : null;
+  const forecastCount = slots.filter((slot) => slot.co2Estimated).length;
+  const summary = `36-hour grid outlook. Carbon intensity ranges from ${Math.round(min)} to ${Math.round(max)} grams of CO2 per kilowatt-hour. ${forecastCount} half-hour slots are estimated from the wind forecast.${sel ? ` The selected ${sel.applianceId} window is ${fmt.format(new Date(sel.start))} to ${fmt.format(new Date(sel.end))}.` : ""}`;
 
   return (
     <div ref={ref} className="relative w-full select-none" onMouseLeave={() => setHover(null)}>
-      <svg width={w} height={H} className="block overflow-visible">
+      <p id="timeline-summary" className="sr-only">{summary}</p>
+      <svg width={w} height={H} className="block overflow-visible" role="img" aria-labelledby="timeline-title timeline-summary">
+        <title id="timeline-title">Grid carbon, wind forecast and electricity tariff timeline</title>
         <defs>
           <linearGradient id="sun" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#fde047" stopOpacity={0.55} />

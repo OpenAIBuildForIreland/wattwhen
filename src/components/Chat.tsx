@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import Icon from "@/components/Icon";
 import type { Household, Mode, Window } from "@/lib/types";
 
 type Msg =
@@ -72,7 +73,7 @@ export default function Chat({
   async function uploadBill(file: File) {
     setBusy(true);
     setError(null);
-    setMsgs((m) => [...m, { role: "user", content: `📄 ${file.name}` }]);
+    setMsgs((m) => [...m, { role: "user", content: `Bill uploaded: ${file.name}` }]);
     try {
       const form = new FormData();
       form.append("bill", file);
@@ -91,11 +92,13 @@ export default function Chat({
     <>
       <motion.button
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls="wattwhen-assistant"
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.97 }}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_40px_rgba(217,70,239,0.45)]"
+        className="fixed bottom-4 right-4 z-40 flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_40px_rgba(217,70,239,0.45)] sm:bottom-6 sm:right-6"
       >
-        ✨ {open ? "Close" : "Ask WattWhen"}
+        <Icon name="sparkle" className="h-4 w-4" /> {open ? "Close" : "Ask WattWhen"}
       </motion.button>
 
       <AnimatePresence>
@@ -105,7 +108,9 @@ export default function Chat({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
-            className="fixed bottom-24 right-6 z-40 flex h-[560px] w-[420px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl"
+            id="wattwhen-assistant"
+            aria-label="Ask WattWhen assistant"
+            className="fixed bottom-20 right-4 z-40 flex h-[min(560px,calc(100dvh-7.5rem))] w-[calc(100vw-2rem)] max-w-[420px] flex-col overflow-hidden rounded-3xl border border-white/15 bg-slate-950/95 shadow-2xl backdrop-blur-xl sm:bottom-24 sm:right-6"
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div>
@@ -123,16 +128,16 @@ export default function Chat({
                     <button
                       key={s}
                       onClick={() => send(s)}
-                      className="block w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-slate-200 hover:border-fuchsia-300/40 hover:bg-white/[0.06]"
+                    className="block min-h-11 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-slate-200 transition-colors hover:border-fuchsia-300/40 hover:bg-white/[0.06]"
                     >
                       {s}
                     </button>
                   ))}
                   <button
                     onClick={() => fileRef.current?.click()}
-                    className="block w-full rounded-xl border border-dashed border-white/15 px-3 py-2 text-left text-slate-300 hover:border-sky-300/50"
+                    className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-dashed border-white/15 px-3 py-2 text-left text-slate-300 transition-colors hover:border-sky-300/50 hover:text-white"
                   >
-                    📄 Upload a photo of your electricity bill to use your real tariff
+                    <Icon name="document" className="h-4 w-4 shrink-0 text-sky-300" /> Upload a photo of your electricity bill to use your real tariff
                   </button>
                 </div>
               )}
@@ -197,17 +202,17 @@ export default function Chat({
               }}
               className="flex items-center gap-2 border-t border-white/10 p-3"
             >
-              <button type="button" onClick={() => fileRef.current?.click()} title="Upload a bill photo" className="rounded-xl border border-white/10 px-2.5 py-2 text-slate-300 hover:text-white">
-                📄
+              <button type="button" onClick={() => fileRef.current?.click()} title="Upload a bill photo" aria-label="Upload a bill photo" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/10 text-slate-300 transition-colors hover:border-sky-300/50 hover:text-white">
+                <Icon name="upload" className="h-4 w-4" />
               </button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="When should I charge the car?"
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-fuchsia-300/50"
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-fuchsia-300/50"
               />
-              <button disabled={busy} className="rounded-xl bg-fuchsia-500 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
-                Send
+              <button disabled={busy} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fuchsia-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50">
+                <span className="hidden sm:inline">Send</span><Icon name="send" className="h-4 w-4" />
               </button>
               <input
                 ref={fileRef}

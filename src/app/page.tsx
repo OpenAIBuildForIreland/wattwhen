@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hotspot, HouseConfig } from "@/components/House3D";
 import Chat from "@/components/Chat";
+import Icon, { type IconName } from "@/components/Icon";
 import SolarYear, { type SolarYearData } from "@/components/SolarYear";
 import Timeline from "@/components/Timeline";
 import { HOUSEHOLDS } from "@/lib/households";
@@ -24,13 +25,13 @@ const when = (w: Window) => {
   return `${d === today ? "Today" : d} ${fmt.format(s)}–${fmt.format(new Date(w.end))}`;
 };
 
-const ICON: Record<Appliance["kind"], string> = {
-  washer: "🧺",
-  dryer: "🌀",
-  dishwasher: "🍽️",
-  immersion: "🚿",
-  ev: "🚗",
-  heatpump: "🌡️",
+const ICON: Record<Appliance["kind"], IconName> = {
+  washer: "washer",
+  dryer: "dryer",
+  dishwasher: "dishwasher",
+  immersion: "immersion",
+  ev: "ev",
+  heatpump: "heatpump",
 };
 const SPOT: Record<Appliance["kind"], [number, number, number]> = {
   washer: [-3.9, 2.6, 2.6],
@@ -44,10 +45,17 @@ const SPOT: Record<Appliance["kind"], [number, number, number]> = {
 const EV_APPLIANCE: Appliance = { id: "ev", name: "EV charge (40 kWh)", kW: 7.2, hours: 5.5, usualStart: "18:30", kind: "ev" };
 const HP_APPLIANCE: Appliance = { id: "heatpump", name: "Heat pump boost", kW: 2.5, hours: 3, usualStart: "17:00", kind: "heatpump" };
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: "cost", label: "💶 Cost" },
-  { id: "carbon", label: "🌿 Carbon" },
-  { id: "both", label: "⚖️ Both" },
+const MODES: { id: Mode; label: string; icon: IconName }[] = [
+  { id: "cost", label: "Cost", icon: "cost" },
+  { id: "carbon", label: "Carbon", icon: "carbon" },
+  { id: "both", label: "Both", icon: "scale" },
+];
+
+const HOME_FEATURES: { id: keyof HouseConfig; label: string; icon: IconName }[] = [
+  { id: "solar", label: "Solar", icon: "solar" },
+  { id: "ev", label: "EV", icon: "ev" },
+  { id: "battery", label: "Battery", icon: "battery" },
+  { id: "heatpump", label: "Heat pump", icon: "heatpump" },
 ];
 
 function buildHousehold(base: Household, cfg: HouseConfig): Household {
@@ -137,13 +145,14 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen bg-[#05070d] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.12),transparent_45%),radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.10),transparent_45%)]" />
-      <div className="relative mx-auto flex max-w-[1500px] flex-col gap-4 px-6 py-5">
+    <main id="main-content" className="min-h-dvh overflow-x-hidden bg-[#0f172a] text-slate-100">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.16),transparent_42%),radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.13),transparent_44%)]" />
+      <div className="pointer-events-none fixed inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:32px_32px]" />
+      <div className="relative mx-auto flex max-w-[1500px] flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5">
         {/* header */}
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-sky-500 text-xl shadow-[0_0_30px_rgba(52,211,153,0.45)]">⚡</div>
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-sky-500 text-emerald-950 shadow-[0_0_30px_rgba(52,211,153,0.45)]"><Icon name="bolt" className="h-5 w-5" /></div>
             <div>
               <h1 className="text-xl font-semibold tracking-tight">WattWhen</h1>
               <p className="text-xs text-slate-400">When to use, store and sell your electricity in Ireland</p>
@@ -154,7 +163,8 @@ export default function Home() {
               <button
                 key={h.id}
                 onClick={() => selectHousehold(h.id)}
-                className={`relative rounded-xl px-3 py-1.5 text-sm transition-colors ${householdId === h.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
+                aria-pressed={householdId === h.id}
+                className={`relative min-h-10 rounded-xl px-3 py-1.5 text-sm transition-colors ${householdId === h.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
               >
                 {householdId === h.id && <motion.span layoutId="hh" className="absolute inset-0 rounded-xl bg-emerald-400" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
                 <span className="relative">{h.name}</span>
@@ -162,16 +172,17 @@ export default function Home() {
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">Optimise for</span>
+            <span className="hidden text-xs text-slate-400 sm:inline">Optimise for</span>
             <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
               {MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setMode(m.id)}
-                  className={`relative rounded-xl px-3 py-1.5 text-sm ${mode === m.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
+                  aria-pressed={mode === m.id}
+                  className={`relative flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm transition-colors ${mode === m.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
                 >
                   {mode === m.id && <motion.span layoutId="mode" className="absolute inset-0 rounded-xl bg-sky-400" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-                  <span className="relative">{m.label}</span>
+                  <span className="relative flex items-center gap-1.5"><Icon name={m.icon} className="h-3.5 w-3.5" />{m.label}</span>
                 </button>
               ))}
             </div>
@@ -180,7 +191,7 @@ export default function Home() {
 
         {/* main */}
         <section className="grid grid-cols-12 gap-4">
-          <div className="relative col-span-12 h-[520px] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 lg:col-span-8">
+          <div className="relative col-span-12 h-[460px] overflow-hidden rounded-3xl border border-white/15 bg-slate-950/65 shadow-[0_24px_80px_rgba(2,6,23,0.28)] sm:h-[520px] lg:col-span-8">
             <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
             <div className="absolute left-4 top-4 flex flex-col gap-2">
               <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-3 backdrop-blur-md">
@@ -191,22 +202,16 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    ["solar", "☀️ Solar"],
-                    ["ev", "🚗 EV"],
-                    ["battery", "🔋 Battery"],
-                    ["heatpump", "🌡️ Heat pump"],
-                  ] as [keyof HouseConfig, string][]
-                ).map(([k, label]) => (
+                {HOME_FEATURES.map(({ id, label, icon }) => (
                   <button
-                    key={k}
-                    onClick={() => setCfg((c) => ({ ...c, [k]: !c[k] }))}
-                    className={`rounded-full border px-3 py-1 text-xs transition-all ${
-                      cfg[k] ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-400 hover:text-slate-200"
+                    key={id}
+                    onClick={() => setCfg((c) => ({ ...c, [id]: !c[id] }))}
+                    aria-pressed={cfg[id]}
+                    className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-all ${
+                      cfg[id] ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-300 hover:border-white/20 hover:text-white"
                     }`}
                   >
-                    {label}
+                    <Icon name={icon} className="h-3.5 w-3.5" />{label}
                   </button>
                 ))}
               </div>
@@ -223,8 +228,8 @@ export default function Home() {
           </div>
 
           {/* windows */}
-          <div className="col-span-12 flex h-[520px] flex-col gap-3 lg:col-span-4">
-            <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500/15 to-sky-500/10 p-4">
+          <div className="col-span-12 flex h-auto min-h-[420px] flex-col gap-3 lg:col-span-4 lg:h-[520px]">
+            <div className="rounded-3xl border border-emerald-300/20 bg-gradient-to-br from-emerald-500/20 to-sky-500/12 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.06)]">
               <div className="text-xs uppercase tracking-wider text-emerald-300/80">If you follow today&apos;s plan</div>
               <div className="mt-1 flex items-baseline gap-4">
                 <motion.span key={totalSaved.toFixed(2)} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-semibold text-white">
@@ -255,8 +260,8 @@ export default function Home() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{ICON[a.kind]}</span>
+                      <div className="flex items-center gap-2">
+                          <span className="grid h-8 w-8 place-items-center rounded-xl bg-white/5 text-emerald-200"><Icon name={ICON[a.kind]} className="h-4 w-4" /></span>
                           <span className="font-medium">{a.name}</span>
                         </div>
                         <span className="font-mono text-sm text-emerald-300">{when(w)}</span>
@@ -290,7 +295,7 @@ export default function Home() {
                   ["year", "Solar year"],
                 ] as const
               ).map(([id, label]) => (
-                <button key={id} onClick={() => setTab(id)} className={`relative rounded-xl px-3 py-1.5 text-sm ${tab === id ? "text-slate-950" : "text-slate-300"}`}>
+                  <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id} className={`relative min-h-10 rounded-xl px-3 py-1.5 text-sm transition-colors ${tab === id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}>
                   {tab === id && <motion.span layoutId="tab" className="absolute inset-0 rounded-xl bg-white" />}
                   <span className="relative">{label}</span>
                 </button>

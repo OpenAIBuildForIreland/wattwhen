@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, RoundedBox } from "@react-three/drei";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import Icon, { type IconName } from "@/components/Icon";
 
 export type HouseConfig = {
   solar: boolean;
@@ -15,7 +16,7 @@ export type HouseConfig = {
 export type Hotspot = {
   id: string;
   label: string;
-  icon: string;
+  icon: IconName;
   position: [number, number, number];
   hint?: string; // e.g. "02:00–04:00"
 };
@@ -158,13 +159,14 @@ function HotspotButton({
       ref={setRef}
       onClick={() => onSelect(spot.id)}
       style={{ transform: "translate(-9999px,-9999px)" }}
-      className={`absolute left-0 top-0 flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium backdrop-blur-md transition-[background,border,box-shadow] ${
+      aria-pressed={selected}
+      className={`absolute left-0 top-0 flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium backdrop-blur-md transition-[background,border,box-shadow] ${
         selected
           ? "z-[2] border-emerald-300 bg-emerald-400/90 text-emerald-950 shadow-[0_0_24px_rgba(52,211,153,0.8)]"
           : "z-[1] border-white/20 bg-slate-900/70 text-slate-100 hover:border-emerald-300/70 hover:bg-slate-800/90"
       }`}
     >
-      <span className="text-sm leading-none">{spot.icon}</span>
+      <Icon name={spot.icon} className="h-3.5 w-3.5 shrink-0" />
       <span>{spot.label}</span>
       {spot.hint && (
         <span className={`rounded-full px-1.5 text-[10px] ${selected ? "bg-emerald-950/20" : "bg-emerald-400/15 text-emerald-300"}`}>
