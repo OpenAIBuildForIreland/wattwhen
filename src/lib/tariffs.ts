@@ -5,10 +5,22 @@ import type { Band, Tariff } from "./types";
 // time-of-use structure (day 08–23, night 23–08, peak 17–19).
 export const TARIFFS: Tariff[] = [
   {
+    id: "standard",
+    supplier: "Sample supplier",
+    plan: "Standard (flat rate)",
+    rates: { day: 0.33, night: 0.33, peak: 0.33, boost: 0.33, flat: 0.33 },
+    bands: [],
+    standingPerDay: 0.8,
+    exportRate: 0.185,
+    source: "Sample rates, to be replaced with supplier prices",
+    checkedOn: "2026-10-04",
+    sample: true,
+  },
+  {
     id: "smart-standard",
     supplier: "Sample supplier",
     plan: "Smart time-of-use",
-    rates: { day: 0.36, night: 0.19, peak: 0.42, boost: 0.19 },
+    rates: { day: 0.36, night: 0.19, peak: 0.42, boost: 0.19, flat: 0.36 },
     bands: [
       { band: "peak", from: "17:00", to: "19:00" },
       { band: "night", from: "23:00", to: "08:00" },
@@ -23,7 +35,7 @@ export const TARIFFS: Tariff[] = [
     id: "smart-ev",
     supplier: "Sample supplier",
     plan: "Smart EV with 02:00–05:00 boost",
-    rates: { day: 0.37, night: 0.2, peak: 0.43, boost: 0.1 },
+    rates: { day: 0.37, night: 0.2, peak: 0.43, boost: 0.1, flat: 0.37 },
     bands: [
       { band: "peak", from: "17:00", to: "19:00" },
       { band: "boost", from: "02:00", to: "05:00" },
@@ -47,6 +59,7 @@ const toMin = (hhmm: string) => {
 };
 
 export function bandAt(tariff: Tariff, localMinutes: number): Band {
+  if (!tariff.bands.length) return "flat";
   for (const b of tariff.bands) {
     const from = toMin(b.from);
     const to = toMin(b.to);

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const h = getHousehold(searchParams.get("household") ?? "general");
+  const h = getHousehold(searchParams.get("household") ?? "default");
   const timeline = await buildTimeline({ tariffId: h.tariffId, lat: h.lat, lon: h.lon });
   return Response.json(timeline);
 }

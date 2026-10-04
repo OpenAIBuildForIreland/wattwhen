@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     mode?: Mode;
   };
   try {
-    const result = await ask(body.messages.slice(-12), body.household ?? getHousehold("general"), body.mode ?? "both");
+    const result = await ask(body.messages.slice(-12), body.household ?? getHousehold("default"), body.mode ?? "both");
     return Response.json(result);
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {

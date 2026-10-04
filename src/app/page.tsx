@@ -99,7 +99,10 @@ function Segmented<T extends string>({
 }
 
 export default function Home() {
-  const [householdId, setHouseholdId] = useState("general");
+  const [householdId, setHouseholdId] = useState("default");
+  const [presetId, setPresetId] = useState("default");
+  const [showPresets, setShowPresets] = useState(true);
+  const [smartSaved, setSmartSaved] = useState<number | null>(null);
   const base = HOUSEHOLDS.find((h) => h.id === householdId)!;
   const [cfg, setCfg] = useState<HouseConfig>({ solar: false, ev: false, battery: false, heatpump: false });
   const [mode, setMode] = useState<Mode>("both");
@@ -110,11 +113,25 @@ export default function Home() {
   const [selected, setSelected] = useState<string | null>("washer");
   const [chatWindows, setChatWindows] = useState<Window[]>([]);
 
-  const selectHousehold = (id: string) => {
+  const selectPreset = (id: string) => {
+    setPresetId(id);
+    if (id === "custom") return;
     const h = HOUSEHOLDS.find((x) => x.id === id)!;
     setHouseholdId(id);
     setCfg({ solar: !!h.solar, ev: !!h.ev, battery: !!h.battery, heatpump: false });
   };
+
+  // ⌘D / Ctrl+D hides the demo preset switcher.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        setShowPresets((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const household = useMemo(() => buildHousehold(base, cfg), [base, cfg]);
 
@@ -133,10 +150,16 @@ export default function Home() {
     fetch("/api/plan", { method: "POST", body: JSON.stringify({ household, mode }) })
       .then((r) => r.json())
       .then((d) => !off && setWindows(d.windows));
+    if (household.tariffId === "standard") {
+      fetch("/api/plan", { method: "POST", body: JSON.stringify({ household: { ...household, tariffId: "smart-standard" }, mode }) })
+        .then((r) => r.json())
+        .then((d: { windows: Window[] }) => !off && setSmartSaved(d.windows.reduce((t, w) => t + Math.max(0, w.savedEUR), 0)));
+    }
     return () => {
       off = true;
     };
   }, [household, mode]);
+  const flat = household.tariffId === "standard";
 
   useEffect(() => {
     if (tab !== "year") return;
@@ -177,7 +200,14 @@ export default function Home() {
             <p className="text-sm text-muted">When to use, store and sell electricity in Ireland</p>
           </div>
           <div className="flex items-center gap-4">
-            <Segmented id="hh" value={householdId} onChange={selectHousehold} options={HOUSEHOLDS.map((h) => ({ id: h.id, label: h.name }))} />
+            {showPresets && (
+              <Segmented
+                id="hh"
+                value={presetId}
+                onChange={selectPreset}
+                options={[...HOUSEHOLDS.map((h) => ({ id: h.id, label: h.name })), { id: "custom", label: "Custom" }]}
+              />
+            )}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted">Optimise for</span>
               <Segmented id="mode" value={mode} onChange={setMode} options={MODES} />
@@ -190,7 +220,7 @@ export default function Home() {
             <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
             <div className="absolute left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">{base.name}</div>
+                <div className="text-sm font-medium">{presetId === "custom" ? `Custom, ${base.name.toLowerCase()}` : base.name}</div>
                 <span className="text-[11px] text-muted">synthetic</span>
               </div>
               <p className="mt-0.5 text-xs leading-relaxed text-muted">{base.blurb}</p>
@@ -198,7 +228,10 @@ export default function Home() {
                 {TOGGLES.map(({ key, label, Icon }) => (
                   <button
                     key={key}
-                    onClick={() => setCfg((c) => ({ ...c, [key]: !c[key] }))}
+                    onClick={() => {
+                      setCfg((c) => ({ ...c, [key]: !c[key] }));
+                      setPresetId("custom");
+                    }}
                     className={`flex items-center gap-1.5 rounded border px-2 py-1 text-xs ${
                       cfg[key] ? "border-foreground/40 bg-foreground/10 text-foreground" : "border-line text-muted hover:text-foreground"
                     }`}
@@ -232,6 +265,12 @@ export default function Home() {
                   and <span className="text-foreground">{(totalCo2 / 1000).toFixed(1)} kg</span> CO2 vs your usual times
                 </span>
               </div>
+              {flat && (
+                <p className="mt-2 border-t border-line pt-2 text-xs leading-relaxed text-muted">
+                  On a flat rate, timing changes your carbon, not your bill. On a smart rate, today&apos;s plan would save{" "}
+                  <span className="font-mono text-best">€{(smartSaved ?? 0).toFixed(2)}</span>.
+                </p>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto rounded-lg border border-line bg-panel">
               {windows.map((w) => {
@@ -294,12 +333,18 @@ export default function Home() {
                     <span className="w-5 border-t-2 border-sun" /> your solar
                   </span>
                 )}
+                {flat ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-3 rounded-sm bg-[#3a3d45]" /> flat rate all day
+                  </span>
+                ) : (
                 <span className="flex items-center gap-1.5">
                   <span className="h-2 w-3 rounded-sm bg-[#3d4a7a]" /> night
                   <span className="ml-1 h-2 w-3 rounded-sm bg-[#2b2e35]" /> day
                   <span className="ml-1 h-2 w-3 rounded-sm bg-[#8a3b33]" /> peak
                   <span className="ml-1 h-2 w-3 rounded-sm bg-[#2f6b4f]" /> EV boost
                 </span>
+                )}
               </div>
             ) : (
               year && (

@@ -1,5 +1,5 @@
 export type Mode = "cost" | "carbon" | "both";
-export type Band = "day" | "night" | "peak" | "boost";
+export type Band = "day" | "night" | "peak" | "boost" | "flat";
 
 export type Slot = {
   start: string; // ISO, 30-minute slot start

@@ -1,7 +1,7 @@
 import { localHHMM, localMinutes, SLOT_MS } from "./time";
 import type { Appliance, Household, Mode, Slot, Window } from "./types";
 
-const BAND_LABEL = { day: "day rate", night: "night rate", peak: "peak rate", boost: "EV boost rate" };
+const BAND_LABEL = { day: "day rate", night: "night rate", peak: "peak rate", boost: "EV boost rate", flat: "flat rate" };
 
 type Cand = { i: number; cost: number; co2: number; solarShare: number; estimated: boolean };
 

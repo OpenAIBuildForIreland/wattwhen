@@ -13,6 +13,7 @@ const BAND_COLOR: Record<Slot["band"], string> = {
   day: "#2b2e35",
   peak: "#8a3b33",
   boost: "#2f6b4f",
+  flat: "#3a3d45",
 };
 
 // green → amber → red, relative to the range shown

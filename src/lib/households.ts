@@ -19,9 +19,21 @@ const evCharge: Appliance = {
 
 export const HOUSEHOLDS: Household[] = [
   {
-    id: "general",
-    name: "General household",
-    blurb: "Semi-d in Dublin. No solar, no EV, and the bill keeps going up.",
+    id: "default",
+    name: "Default tariff",
+    blurb: "Semi-d in Dublin on a standard flat-rate plan, like about half of Irish homes. Timing changes its carbon, not its bill.",
+    synthetic: true,
+    county: "Dublin",
+    lat: 53.35,
+    lon: -6.25,
+    annualKWh: 4200,
+    appliances: homeAppliances,
+    tariffId: "standard",
+  },
+  {
+    id: "smart",
+    name: "Smart rate",
+    blurb: "The same semi-d on a smart time-of-use plan: cheap nights, expensive 17:00–19:00 peak.",
     synthetic: true,
     county: "Dublin",
     lat: 53.35,
@@ -32,7 +44,7 @@ export const HOUSEHOLDS: Household[] = [
   },
   {
     id: "ev",
-    name: "EV commuter",
+    name: "EV",
     blurb: "Charges the car most evenings after work.",
     synthetic: true,
     county: "Kildare",
