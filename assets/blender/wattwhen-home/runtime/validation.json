@@ -1,0 +1,38 @@
+{
+  "loader": "Three.js 186 GLTFLoader",
+  "file": "runtime/wattwhen-home.glb",
+  "sha256": "aaf21e9d5767da9137bb4ae22de7e00ab729c80f8b80dde687b174887cdbb0f3",
+  "loaded": true,
+  "triangles": 107562,
+  "runtimeVertices": 181254,
+  "meshCount": 144,
+  "materialCount": 43,
+  "bounds": {
+    "min": [
+      -6.3552033346032415,
+      -0.6000000238418579,
+      -5.25
+    ],
+    "max": [
+      6.25,
+      8.649000457953662,
+      5.75
+    ],
+    "size": [
+      12.605203334603242,
+      9.24900048179552,
+      11
+    ]
+  },
+  "selectionRays": {
+    "ev": "ev",
+    "battery": "battery",
+    "heatpump": "heatpump",
+    "washer": "washer",
+    "dryer": "dryer",
+    "dishwasher": "dishwasher",
+    "immersion": "immersion"
+  },
+  "nightMaterials": "All six preserve emission hue and daytime intensity",
+  "browserChecks": "All eight setup combinations, cutaway and night tested in the local preview. Manual EV and washer clicks selected correct groups."
+}

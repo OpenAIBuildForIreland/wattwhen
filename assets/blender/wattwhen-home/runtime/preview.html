@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WattWhen — the home</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#111816;color:#e3decf;font:15px system-ui,sans-serif}header{position:absolute;top:26px;left:32px;z-index:1;pointer-events:none}h1{font-size:26px;letter-spacing:-1px;margin:0 0 6px}header p{color:#9faa9f;margin:0}canvas{display:block;width:100vw;height:100vh}aside{position:absolute;bottom:22px;left:24px;right:24px;max-width:720px;margin:auto;padding:16px 20px;background:#233028ed;border:1px solid #53644f;border-radius:18px;backdrop-filter:blur(16px)}nav{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}label,button{display:flex;gap:7px;align-items:center;background:#11181660;border:1px solid #617059;border-radius:7px;padding:7px 10px;color:inherit;font:inherit}input{accent-color:#c3eb9c}button{cursor:pointer}#status{font-size:12px;color:#bac9b3;line-height:1.5}#selection{position:absolute;right:24px;top:24px;border:1px solid #68785e;border-radius:12px;padding:12px 16px;background:#233028dd;max-width:240px}#selection:empty{display:none}@media(max-width:700px){header{left:20px;top:18px}h1{font-size:21px}header p{max-width:260px;font-size:12px}aside{left:12px;right:12px;bottom:12px;padding:12px}nav{gap:5px}label,button{font-size:12px;padding:6px}#selection{top:88px;right:15px}}
+</style><script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script></head><body>
+<header><h1>WattWhen / The home</h1><p>A miniature Irish home · Drag to explore, click equipment to select</p></header>
+<div id="selection" aria-live="polite"></div><main id="view"></main><aside><nav>
+<label><input id="solar" type="checkbox" checked>Solar</label><label><input id="ev" type="checkbox" checked>EV</label><label><input id="battery" type="checkbox" checked>Battery</label><label><input id="cutaway" type="checkbox">Cutaway</label><label><input id="night" type="checkbox">Night</label><button id="reset">Reset view</button><button id="verify">Run asset checks</button>
+</nav><div id="status" role="status">Loading the home…</div></aside>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const view=document.querySelector('#view'),status=document.querySelector('#status'),selection=document.querySelector('#selection');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#111816');
+const camera=new THREE.OrthographicCamera();camera.position.set(13,14,19);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;view.append(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,2.7,.3);controls.minPolarAngle=.25;controls.maxPolarAngle=Math.PI*.48;controls.minZoom=.65;controls.maxZoom=3;controls.update();
+const hemisphere=new THREE.HemisphereLight('#e3ebdb','#29362d',2.1);scene.add(hemisphere);
+const sun=new THREE.DirectionalLight('#fff2d6',3.8);sun.position.set(-7,16,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-11,right:11,top:12,bottom:-10,near:1,far:50});sun.shadow.normalBias=.03;sun.shadow.bias=-.00015;sun.shadow.radius=4;scene.add(sun);
+const fill=new THREE.DirectionalLight('#c0d5dc',2);fill.position.set(8,7,-3);scene.add(fill);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:'#233028',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.63;ground.receiveShadow=true;scene.add(ground);
+let asset,contract,nodes={},materials={},selected,checks='';
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);const aspect=w/h,span=Math.max(18.8,18/aspect);camera.left=-span*aspect/2;camera.right=span*aspect/2;camera.top=span/2;camera.bottom=-span/2;camera.updateProjectionMatrix();render();}
+function render(){renderer.render(scene,camera)}controls.addEventListener('change',render);addEventListener('resize',resize);resize();
+function apply(){if(!asset)return;const cut=document.querySelector('#cutaway').checked,night=document.querySelector('#night').checked;
+ for(const name of contract.cutawayHide)nodes[name].visible=!cut;
+ for(const [key,name] of Object.entries(contract.optionalGroups))nodes[name].visible=document.querySelector('#'+key).checked&&(key!=='solar'||!cut);
+ for(const [name,levels] of Object.entries(contract.nightMaterials))if(materials[name])materials[name].emissiveIntensity=night?levels.night:levels.day;
+ hemisphere.intensity=night?.45:2.1;sun.intensity=night?.45:3.8;fill.intensity=night?.55:2;scene.background.set(night?'#0c1317':'#111816');
+ if(selected){selection.textContent='';selected=null;}render();updateStatus();}
+function updateStatus(){status.textContent=`${(contract.bytes/1048576).toFixed(2)} MB · ${contract.triangles.toLocaleString()} triangles · ${renderer.info.render.calls} draws · ${checks||'GLB loaded successfully'}`;}
+const ids=['solar','ev','battery','cutaway','night'];ids.forEach(id=>document.querySelector('#'+id).addEventListener('change',apply));
+document.querySelector('#reset').onclick=()=>{camera.position.set(13,14,19);camera.zoom=1;controls.target.set(0,2.7,.3);camera.updateProjectionMatrix();controls.update();render();};
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let press;
+renderer.domElement.addEventListener('pointerdown',e=>press=[e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup',e=>{if(!asset||!press||Math.hypot(e.clientX-press[0],e.clientY-press[1])>5)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObject(asset,true).find(h=>{let o=h.object;while(o){if(!o.visible)return false;o=o.parent;}return true;});let o=hit?.object;while(o&&!o.userData.selectableId)o=o.parent;selected=o;selection.textContent=o?`Selected: ${o.userData.selectableId}`:'';});
+function verify(){const previous=ids.map(id=>document.querySelector('#'+id).checked);const fails=[];let combos=0;
+ for(let mask=0;mask<8;mask++){['solar','ev','battery'].forEach((id,i)=>document.querySelector('#'+id).checked=!!(mask&(1<<i)));document.querySelector('#cutaway').checked=false;apply();for(const [id,name] of Object.entries(contract.optionalGroups))if(nodes[name].visible!==document.querySelector('#'+id).checked)fails.push(name);if(!nodes.Shell_Roof_Front.visible||!nodes.Landscape.visible)fails.push('base missing');combos++;}
+ document.querySelector('#cutaway').checked=true;apply();for(const name of contract.cutawayHide)if(nodes[name].visible)fails.push(name+' cutaway');
+ for(const [id,name] of Object.entries(contract.selectableGroups)){const node=nodes[name];if(!node||node.userData.selectableId!==id)fails.push('selection '+id);const meshes=[];node?.traverse(o=>{if(o.isMesh)meshes.push(o)});if(!meshes.length)fails.push('empty '+id);}
+ for(const [name,level] of Object.entries(contract.nightMaterials)){if(!materials[name]||materials[name].emissive.r+materials[name].emissive.g+materials[name].emissive.b===0)fails.push('material '+name);}
+ document.querySelector('#night').checked=true;apply();for(const [name,level] of Object.entries(contract.nightMaterials))if(materials[name]?.emissiveIntensity!==level.night)fails.push('emission '+name);
+ ids.forEach((id,i)=>document.querySelector('#'+id).checked=previous[i]);apply();checks=fails.length?'CHECK FAILED: '+fails.join(', '):`${combos} setup combinations, cutaway, 7 selection groups and night materials passed`;updateStatus();}
+document.querySelector('#verify').onclick=verify;
+try{contract=await fetch('/integration.json').then(r=>r.json());const gltf=await new GLTFLoader().loadAsync('/'+contract.runtimeCopy);asset=gltf.scene;asset.traverse(o=>{nodes[o.name]=o;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;for(const mat of Array.isArray(o.material)?o.material:[o.material])materials[mat.name]=mat;}});scene.add(asset);apply();verify();}catch(e){status.textContent='Unable to load asset: '+e.message;console.error(e);}
+</script></body></html>

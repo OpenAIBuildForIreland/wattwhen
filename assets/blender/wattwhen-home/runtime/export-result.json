@@ -1,0 +1,135 @@
+{
+  "asset": "WattWhen Home",
+  "version": "1.0",
+  "blend": "wattwhen-home.blend",
+  "runtimeFile": "/Users/kene/code/wattwhen-home-assets/public/models/wattwhen-home.glb",
+  "runtimeCopy": "runtime/wattwhen-home.glb",
+  "sha256": "aaf21e9d5767da9137bb4ae22de7e00ab729c80f8b80dde687b174887cdbb0f3",
+  "bytes": 5057792,
+  "triangles": 107562,
+  "vertices": 181254,
+  "meshNodes": 144,
+  "materialPrimitives": 144,
+  "sourceUnits": "metres",
+  "blenderAxes": {
+    "up": "+Z",
+    "front": "-Y"
+  },
+  "gltfAxes": {
+    "up": "+Y",
+    "front": "+Z"
+  },
+  "root": "WW_Home",
+  "suggestedInitialScaleForExistingHouse3D": 1.0,
+  "recommendedCamera": {
+    "type": "orthographic",
+    "position": [
+      13,
+      14,
+      19
+    ],
+    "target": [
+      0,
+      2.7,
+      0.3
+    ],
+    "verticalSpan": 15.94
+  },
+  "optionalGroups": {
+    "solar": "System_Solar",
+    "ev": "System_EV",
+    "battery": "System_Battery"
+  },
+  "selectableGroups": {
+    "ev": "EV_Vehicle",
+    "battery": "System_Battery",
+    "heatpump": "Appliance_HeatPump",
+    "washer": "Appliance_Washer",
+    "dryer": "Appliance_Dryer",
+    "dishwasher": "Appliance_Dishwasher",
+    "immersion": "Appliance_Immersion"
+  },
+  "cutawayHide": [
+    "Shell_Front",
+    "Shell_Right",
+    "Shell_Roof_Front",
+    "Shell_Roof_Back",
+    "Shell_UpperFloor",
+    "System_Solar"
+  ],
+  "cutawayDependencies": {
+    "Shell_Roof_Front": [
+      "Solar_RoofFront"
+    ],
+    "Shell_Right": [
+      "Solar_Inverter"
+    ]
+  },
+  "nightMaterials": {
+    "Window_Warm_Light": {
+      "day": 0,
+      "night": 1.8
+    },
+    "Status_Solar": {
+      "day": 0.2,
+      "night": 0.85
+    },
+    "Status_Battery": {
+      "day": 0.2,
+      "night": 0.85
+    },
+    "Status_EV": {
+      "day": 0.2,
+      "night": 0.85
+    },
+    "Status_Appliance": {
+      "day": 0.2,
+      "night": 0.85
+    },
+    "EV_Lamp_Pearl": {
+      "day": 0,
+      "night": 0.6
+    }
+  },
+  "anchors": {
+    "battery": "Anchor_battery",
+    "dishwasher": "Anchor_dishwasher",
+    "dryer": "Anchor_dryer",
+    "ev": "Anchor_ev",
+    "heatpump": "Anchor_heatpump",
+    "immersion": "Anchor_immersion",
+    "solar": "Anchor_solar",
+    "washer": "Anchor_washer"
+  },
+  "exportChecks": {
+    "requiredNodes": true,
+    "finiteGeometry": true,
+    "sizeBudget": true,
+    "triangleBudget": true,
+    "drawCallBudget": true,
+    "noLightsOrCameras": true,
+    "noExternalTextures": true
+  },
+  "integrationStatus": "Asset only. Existing React component unchanged; final app camera and interaction wiring need integration validation in a new worktree/branch.",
+  "sourceEvaluatedVertices": 55866,
+  "bounds": {
+    "min": [
+      -6.3552033346032415,
+      -0.6000000238418579,
+      -5.25
+    ],
+    "max": [
+      6.25,
+      8.649000457953662,
+      5.75
+    ],
+    "size": [
+      12.605203334603242,
+      9.24900048179552,
+      11
+    ]
+  },
+  "extraConfigGroups": {
+    "heatpump": "Appliance_HeatPump"
+  }
+}

@@ -1,0 +1,1 @@
+Asset complete in codex/wattwhen-home-assets, based on claude/build. See HANDOFF.md and runtime/validation.json. Application source is unchanged. User authorized independent artistic decisions through export and subsequently approved scripts.
