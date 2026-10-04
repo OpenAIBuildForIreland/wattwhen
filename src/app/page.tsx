@@ -73,7 +73,7 @@ function Badge({ kind, children }: { kind: "data" | "estimate" | "ai" | "sample"
 }
 
 export default function Home() {
-  const [householdId, setHouseholdId] = useState("mam");
+  const [householdId, setHouseholdId] = useState("general");
   const base = HOUSEHOLDS.find((h) => h.id === householdId)!;
   const [cfg, setCfg] = useState<HouseConfig>({ solar: false, ev: false, battery: false, heatpump: false });
   const [mode, setMode] = useState<Mode>("both");

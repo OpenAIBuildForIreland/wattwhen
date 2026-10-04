@@ -20,8 +20,8 @@ it's both cheap and clean. Tomorrow by 21:00 wind collapses to ~400 MW, so
 the same night rate will be much dirtier. A tariff can't tell you that.
 WattWhen can.
 
-Users (one household can mix them): a general household (hero persona "Mam's
-house": no solar or EV, complains about bills), an EV owner, a solar owner
+Users (one household can mix them): a general household (no solar or
+EV, complains about bills), an EV owner, a solar owner
 with an optional battery.
 
 ## Read before coding
@@ -57,7 +57,7 @@ src/lib/
   tariffs.ts         tariff table: bands (day 08–23, night 23–08, peak 17–19),
                      rates, standing charge, export rate, source URL,
                      checkedOn, sample: true until verified
-  households.ts      3 synthetic households: "Mam's house", "EV commuter",
+  households.ts      3 synthetic households: "General household", "EV commuter",
                      "Solar + EV + battery"; appliances with kW and duration;
                      monthly kWh; labelled synthetic
   planner.ts         best windows (algorithm below)
@@ -153,7 +153,7 @@ Dark, premium energy-dashboard feel. Desktop-first, 1440×900 demo screen.
 1. `sources/*` + `forecast.ts` + `/api/grid`, verified with curl (live and
    sample fallback).
 2. `tariffs.ts`, `households.ts`, `planner.ts` + `/api/plan`, checked with
-   curl for Mam's house in all three modes.
+   curl for the general household in all three modes.
 3. Timeline + setup panel + window cards on the page with live data.
 4. House3D with toggles and selection linked to the timeline.
 5. Solar year view.

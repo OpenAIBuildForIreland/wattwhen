@@ -19,8 +19,8 @@ const evCharge: Appliance = {
 
 export const HOUSEHOLDS: Household[] = [
   {
-    id: "mam",
-    name: "Mam's house",
+    id: "general",
+    name: "General household",
     blurb: "Semi-d in Dublin. No solar, no EV, and the bill keeps going up.",
     synthetic: true,
     county: "Dublin",

@@ -8,7 +8,7 @@
 
 One household can be any mix of these:
 
-- **General household.** The hero persona is "Mam's house": no solar, no EV,
+- **General household.** No solar, no EV. The pitch story is Kene's mum,
   always complaining about the electricity bill.
 - **EV owner.** The biggest flexible load (around 7 kW for several hours).
 - **Solar owner**, optionally with a home battery.
@@ -92,7 +92,7 @@ The UI always distinguishes:
 
 ## Demo script (3 minutes)
 
-1. Who: "My mam always complains about the electricity bill." Open Mam's house.
+1. Who: "My mam always complains about the electricity bill." Open the general household.
 2. The 3D house and the 36h timeline. Live EirGrid data, sourced and
    timestamped.
 3. Click the washing machine and the immersion to see the best windows, and
