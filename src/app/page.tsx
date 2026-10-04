@@ -101,7 +101,8 @@ function Segmented<T extends string>({
 export default function Home() {
   const [householdId, setHouseholdId] = useState("default");
   const [presetId, setPresetId] = useState("default");
-  const [showPresets, setShowPresets] = useState(true);
+  const [showPresets, setShowPresets] = useState(false);
+  const [tariffOverride, setTariffOverride] = useState<string | null>(null);
   const [smartSaved, setSmartSaved] = useState<number | null>(null);
   const base = HOUSEHOLDS.find((h) => h.id === householdId)!;
   const [cfg, setCfg] = useState<HouseConfig>({ solar: false, ev: false, battery: false, heatpump: false });
@@ -116,12 +117,13 @@ export default function Home() {
   const selectPreset = (id: string) => {
     setPresetId(id);
     if (id === "custom") return;
+    setTariffOverride(null);
     const h = HOUSEHOLDS.find((x) => x.id === id)!;
     setHouseholdId(id);
     setCfg({ solar: !!h.solar, ev: !!h.ev, battery: !!h.battery, heatpump: false });
   };
 
-  // ⌘D / Ctrl+D hides the demo preset switcher.
+  // ⌘D / Ctrl+D swaps the simple Default/Custom toggle for the full demo presets.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
@@ -133,17 +135,21 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const household = useMemo(() => buildHousehold(base, cfg), [base, cfg]);
+  const household = useMemo(() => {
+    const h = buildHousehold(base, cfg);
+    return tariffOverride ? { ...h, tariffId: tariffOverride } : h;
+  }, [base, cfg, tariffOverride]);
+  const tariffId = household.tariffId;
 
   useEffect(() => {
     let off = false;
-    fetch(`/api/grid?household=${householdId}`)
+    fetch(`/api/grid?household=${householdId}&tariff=${tariffId}`)
       .then((r) => r.json())
       .then((d) => !off && setTimeline(d));
     return () => {
       off = true;
     };
-  }, [householdId]);
+  }, [householdId, tariffId]);
 
   useEffect(() => {
     let off = false;
@@ -200,12 +206,22 @@ export default function Home() {
             <p className="text-sm text-muted">When to use, store and sell electricity in Ireland</p>
           </div>
           <div className="flex items-center gap-4">
-            {showPresets && (
+            {showPresets ? (
               <Segmented
                 id="hh"
                 value={presetId}
                 onChange={selectPreset}
                 options={[...HOUSEHOLDS.map((h) => ({ id: h.id, label: h.name })), { id: "custom", label: "Custom" }]}
+              />
+            ) : (
+              <Segmented
+                id="hh"
+                value={presetId === "custom" ? "custom" : presetId === "default" ? "default" : ""}
+                onChange={(id) => selectPreset(id)}
+                options={[
+                  { id: "default", label: "Default rate" },
+                  { id: "custom", label: "Custom" },
+                ]}
               />
             )}
             <div className="flex items-center gap-2">
@@ -218,12 +234,14 @@ export default function Home() {
         <section className="grid grid-cols-12 gap-4">
           <div className="relative col-span-12 h-[520px] overflow-hidden rounded-lg border border-line bg-panel lg:col-span-8">
             <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
-            <div className="absolute left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
+            <div className="absolute z-10 left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">{presetId === "custom" ? `Custom, ${base.name.toLowerCase()}` : base.name}</div>
+                <div className="text-sm font-medium">{presetId === "custom" ? "Custom household" : base.name}</div>
                 <span className="text-[11px] text-muted">synthetic</span>
               </div>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted">{base.blurb}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                {presetId === "custom" ? "Choose what the house has and which tariff it's on." : base.blurb}
+              </p>
               <div className="mt-3 grid grid-cols-2 gap-1">
                 {TOGGLES.map(({ key, label, Icon }) => (
                   <button
@@ -241,8 +259,32 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              {presetId === "custom" && (
+                <div className="mt-3">
+                  <div className="mb-1 text-[11px] text-muted">Tariff</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(
+                      [
+                        ["standard", "Flat"],
+                        ["smart-standard", "Smart"],
+                        ["smart-ev", "Smart EV"],
+                      ] as const
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        onClick={() => setTariffOverride(id)}
+                        className={`rounded border px-2 py-1 text-xs ${
+                          tariffId === id ? "border-foreground/40 bg-foreground/10 text-foreground" : "border-line text-muted hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="absolute bottom-4 left-4 flex items-baseline gap-4 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
+            <div className="absolute z-10 bottom-4 left-4 flex items-baseline gap-4 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
               <span className="text-muted">Grid now</span>
               <span>
                 <span className="font-mono text-base">{nowSlot?.co2 ?? "–"}</span> <span className="text-muted">gCO2/kWh</span>

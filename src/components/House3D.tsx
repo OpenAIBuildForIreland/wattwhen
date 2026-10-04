@@ -335,7 +335,7 @@ export default function House3D({
         target={[0, 2.2, 0]}
       />
     </Canvas>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden [&>button]:pointer-events-auto">
+      <div className="pointer-events-none absolute inset-0 isolate z-0 overflow-hidden [&>button]:pointer-events-auto">
         {hotspots.map((h) => (
           <HotspotButton
             key={h.id}
