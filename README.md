@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WattWhen
 
-## Getting Started
+**When should you use, store and sell your electricity?** WattWhen reads
+Ireland's live grid (EirGrid), the solar forecast (Met Éireann) and your
+household setup, and tells you the cheapest and cleanest time to charge the
+car, run the washing or soak up your solar.
 
-First, run the development server:
+Built at **OpenAI Build for Ireland** (OpenAI × Give(a)Go × Dogpatch Labs),
+4 October 2026.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # add OPENAI_API_KEY and OPENAI_MODEL
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Data
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- [EirGrid Smart Grid Dashboard](https://www.smartgriddashboard.com/): grid carbon intensity, wind forecast, demand
+- [Met Éireann open data](https://www.met.ie/climate/available-data): hourly solar radiation forecast
+- [PVGIS, EU Joint Research Centre](https://re.jrc.ec.europa.eu/pvg_tools/en/): annual solar output by month
+- Supplier tariffs: hand-built table, sources in `src/lib/tariffs.ts`
+- Household profiles: synthetic, labelled in the app
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Details and quirks: [`docs/data-sources.md`](docs/data-sources.md).
 
-## Learn More
+## For contributors and agents
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Start with [`AGENTS.md`](AGENTS.md), then `docs/`. Skills for Claude Code
+(`.claude/skills/`) and Codex (`.agents/skills/`) and MCP servers (`.mcp.json`,
+`.codex/config.toml`) come with the repo.
