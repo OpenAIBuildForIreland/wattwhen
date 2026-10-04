@@ -262,19 +262,20 @@ export default function Home() {
               {presetId === "custom" && (
                 <div className="mt-3">
                   <div className="mb-1 text-[11px] text-muted">Tariff</div>
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-2 gap-1">
                     {(
                       [
                         ["standard", "Flat"],
                         ["smart-standard", "Smart"],
-                        ["smart-ev", "Smart EV"],
                       ] as const
                     ).map(([id, label]) => (
                       <button
                         key={id}
                         onClick={() => setTariffOverride(id)}
                         className={`rounded border px-2 py-1 text-xs ${
-                          tariffId === id ? "border-foreground/40 bg-foreground/10 text-foreground" : "border-line text-muted hover:text-foreground"
+                          (id === "standard") === (tariffId === "standard")
+                            ? "border-foreground/40 bg-foreground/10 text-foreground"
+                            : "border-line text-muted hover:text-foreground"
                         }`}
                       >
                         {label}
