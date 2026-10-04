@@ -5,6 +5,8 @@ Ireland's live grid (EirGrid), the solar forecast (Met Éireann) and your
 household setup, and tells you the cheapest and cleanest time to charge the
 car, run the washing or soak up your solar.
 
+The assistant and bill reader run on Claude Haiku 4.5.
+
 Built at **OpenAI Build for Ireland** (OpenAI × Give(a)Go × Dogpatch Labs),
 4 October 2026.
 
@@ -12,7 +14,7 @@ Built at **OpenAI Build for Ireland** (OpenAI × Give(a)Go × Dogpatch Labs),
 
 ```bash
 npm install
-cp .env.example .env.local   # add OPENAI_API_KEY and OPENAI_MODEL
+cp .env.example .env.local   # add ANTHROPIC_API_KEY
 npm run dev                  # http://localhost:3000
 ```
 

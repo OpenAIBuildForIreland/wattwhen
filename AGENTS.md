@@ -13,8 +13,9 @@ for Ireland, 4 Oct 2026. Submissions close at **16:00**.
 
 ## Rules
 
-- Keep the OpenAI key on the server (route handlers only). Never expose it to the
-  client, never commit `.env.local`.
+- Keep the Anthropic key on the server (route handlers only). Never expose it to
+  the client, never commit `.env.local`. The chat and bill reader use Claude
+  Haiku 4.5 (`claude-haiku-4-5`) through `@anthropic-ai/sdk`, in `src/lib/assistant.ts`.
 - Every external fetch retries, caches, and falls back to `src/data/samples/`.
   The UI shows the source and timestamp, and says when it's using a sample.
 - Keep facts, estimates and AI apart in the UI: **Data** (sourced),
@@ -32,7 +33,8 @@ for Ireland, 4 Oct 2026. Submissions close at **16:00**.
   `.claude/skills/`, Codex reads `.agents/skills/`.
 - MCP servers: `.mcp.json` (Claude Code) and `.codex/config.toml` (Codex):
   Playwright (look at the running app, take screenshots), Next.js DevTools,
-  OpenAI docs, Context7.
+  OpenAI docs (unused since the switch to Claude), Context7. For Claude API usage, use the
+  `claude-api` skill in Claude Code.
 
 ## Git
 

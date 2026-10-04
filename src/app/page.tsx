@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hotspot, HouseConfig } from "@/components/House3D";
+import Chat from "@/components/Chat";
 import SolarYear, { type SolarYearData } from "@/components/SolarYear";
 import Timeline from "@/components/Timeline";
 import { HOUSEHOLDS } from "@/lib/households";
@@ -82,6 +83,7 @@ export default function Home() {
   const [windows, setWindows] = useState<Window[]>([]);
   const [year, setYear] = useState<SolarYearData | null>(null);
   const [selected, setSelected] = useState<string | null>("washer");
+  const [chatWindows, setChatWindows] = useState<Window[]>([]);
 
   const selectHousehold = (id: string) => {
     const h = HOUSEHOLDS.find((x) => x.id === id)!;
@@ -337,7 +339,7 @@ export default function Home() {
           </div>
           {tab === "today" ? (
             timeline ? (
-              <Timeline slots={timeline.slots} now={timeline.now} windows={windows} selected={selected} showSolar={cfg.solar} kWp={household.solar?.kWp ?? 0} />
+              <Timeline slots={timeline.slots} now={timeline.now} windows={[...windows, ...chatWindows]} selected={selected} showSolar={cfg.solar} kWp={household.solar?.kWp ?? 0} />
             ) : (
               <div className="h-[170px] animate-pulse rounded-2xl bg-slate-900/60" />
             )
@@ -361,6 +363,16 @@ export default function Home() {
           )}
         </section>
       </div>
+      <Chat
+        household={household}
+        mode={mode}
+        onWindows={(ws) => {
+          const tagged = ws.map((w) => ({ ...w, applianceId: w.applianceId === "custom" ? "chat" : w.applianceId }));
+          setChatWindows(tagged.filter((w) => w.applianceId === "chat"));
+          setSelected(tagged[tagged.length - 1].applianceId);
+          setTab("today");
+        }}
+      />
     </main>
   );
 }

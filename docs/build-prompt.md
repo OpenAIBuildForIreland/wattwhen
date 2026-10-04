@@ -34,14 +34,15 @@ with an optional battery.
    Samples are in `src/data/samples/`.
 4. Use the `ui-ux-pro-max` skill to pick a design system (dark theme,
    energy-coloured accents) and the `framer-motion` skill for animation.
-   Check OpenAI SDK usage through the OpenAI docs MCP, not from memory.
+   Check Anthropic SDK usage against the official docs, not from memory.
 
 ## Stack (already installed)
 
 Next.js 16 App Router, TypeScript, Tailwind v4, `three` +
 `@react-three/fiber` v9 + `@react-three/drei` v10, `motion` v14 (import from
-`motion/react`), `openai` v7, `fast-xml-parser`. Env vars: `OPENAI_API_KEY`,
-`OPENAI_MODEL` (in `.env.local`, server only).
+`motion/react`), `@anthropic-ai/sdk`, `fast-xml-parser`. Env var:
+`ANTHROPIC_API_KEY` (in `.env.local`, server only). Model: Claude Haiku 4.5,
+`claude-haiku-4-5`.
 
 ## Architecture
 
@@ -67,7 +68,7 @@ src/app/api/
                      co2Estimated, windMW, tariffBand, price, solarKW? } + meta
                      { sources, fetchedAt, usedSample }
   plan/route.ts      POST { household, mode } → best window per appliance
-  chat/route.ts      POST messages → OpenAI with function tools: get_timeline,
+  chat/route.ts      POST messages → Claude Haiku 4.5 with tools: get_timeline,
                      best_window(appliance, deadline?), solar_year(). Tools
                      call src/lib; the model only explains
   bill/route.ts      (should-have) POST image → vision extraction of supplier,

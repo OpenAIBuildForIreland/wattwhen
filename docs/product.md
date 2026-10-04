@@ -107,5 +107,6 @@ The UI always distinguishes:
 ## Stack
 
 Next.js 16 (App Router, TypeScript, Tailwind), react-three-fiber + drei,
-Motion v14 (`motion/react`), OpenAI SDK, deployed on Vercel. Repo:
+Motion v14 (`motion/react`), Anthropic SDK with Claude Haiku 4.5 for the chat
+and bill reader, deployed on Vercel. Repo:
 https://github.com/OpenAIBuildForIreland/wattwhen (public).
