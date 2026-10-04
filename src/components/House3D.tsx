@@ -103,7 +103,7 @@ class ModelBoundary extends Component<{ children: ReactNode }, { failed: boolean
   render() { return this.state.failed ? <div role="status" className="flex h-full items-center justify-center p-8 text-center text-sm text-muted">The home couldn’t load. Your energy plan is still available below.</div> : this.props.children; }
 }
 
-export default function House3D({ config, hotspots, selected, onSelect, sunStrength, gridCo2 }: {
+export default function House3D({ config, selected, onSelect, sunStrength, gridCo2 }: {
   config: HouseConfig; hotspots: Hotspot[]; selected: string | null; onSelect: (id: string) => void;
   sunStrength: number; gridCo2: number | null;
 }) {
@@ -123,7 +123,7 @@ export default function House3D({ config, hotspots, selected, onSelect, sunStren
   const gridColor = gridCo2 === null ? "#8fb3d9" : gridCo2 < 150 ? "#9ac88b" : gridCo2 < 250 ? "#d9b44a" : "#d4685c";
   const controlsClass = "flex min-h-9 items-center gap-1.5 rounded-md border border-line bg-background/90 px-2.5 text-xs text-foreground backdrop-blur-sm hover:border-foreground/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-best";
   return <div className="relative h-full w-full" aria-label="Interactive home and appliances">
-    <div className="absolute inset-x-0 bottom-[180px] top-[260px] min-[760px]:inset-y-0 min-[760px]:left-[210px]">
+    <div className="absolute inset-x-0 bottom-[72px] top-[260px] min-[760px]:inset-y-0 min-[760px]:left-[210px]">
       <ModelBoundary>
         <Canvas key={viewKey} orthographic shadows={{ type: THREE.PCFShadowMap }} camera={{ position: [13, 14, 19], zoom: 30, near: .1, far: 120 }} dpr={[1, 1.5]}
           frameloop={reducedMotion || (!config.ev && !config.battery && !config.solar) ? "demand" : "always"}
@@ -152,13 +152,6 @@ export default function House3D({ config, hotspots, selected, onSelect, sunStren
       <button className={controlsClass} aria-pressed={cutaway} onClick={() => setCutaway((v) => !v)}>{cutaway ? <Home size={14} aria-hidden /> : <Layers size={14} aria-hidden />}{cutaway ? "Exterior" : "Look inside"}</button>
       <button className={controlsClass} aria-pressed={night} onClick={() => setNight((v) => !v)}>{night ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />}{night ? "Day" : "Night"}</button>
       <button className={controlsClass} aria-label="Reset house view" onClick={() => setViewKey((v) => v + 1)}><RotateCcw size={14} aria-hidden /></button>
-    </div>
-    <div className="absolute bottom-20 left-4 z-[2] grid w-[260px] grid-cols-2 gap-1.5" role="group" aria-label="Select an appliance">
-      {hotspots.map((spot) => <button key={spot.id} title={spot.label} aria-pressed={selected === spot.id} onClick={() => choose(spot.id)}
-        className={`flex min-h-9 min-w-0 items-center gap-1.5 rounded border bg-background/90 px-2 py-1 text-left text-[11px] backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-best ${selected === spot.id ? "border-best text-foreground" : "border-line text-muted hover:border-foreground/40"}`}>
-        <span aria-hidden>{spot.icon}</span><span className="min-w-0 flex-1 truncate">{spot.label}</span>{spot.hint && <span className="font-mono text-[10px] text-best">{spot.hint}</span>}
-      </button>)}
-      {config.battery && <button onClick={() => choose("battery")} aria-pressed={selected === "battery"} className={`${controlsClass} col-span-2 justify-center ${selected === "battery" ? "border-best" : ""}`}>Home battery</button>}
     </div>
     {selected === "battery" && config.battery && <p role="status" className="absolute bottom-4 right-4 max-w-48 rounded border border-line bg-background/90 px-3 py-2 text-xs text-muted">Home battery · stores energy for later use.</p>}
   </div>;
