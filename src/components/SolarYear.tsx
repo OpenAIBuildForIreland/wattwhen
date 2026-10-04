@@ -37,7 +37,7 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
   return (
     <div ref={ref} className="w-full">
       <svg width={w} height={H} className="block overflow-visible">
-        <line x1={0} x2={w} y1={yb(0)} y2={yb(0)} stroke="rgba(148,163,184,0.25)" strokeDasharray="4 4" />
+        <line x1={0} x2={w} y1={yb(0)} y2={yb(0)} stroke="rgba(232,230,225,0.15)" strokeDasharray="4 4" />
         {order.map((mi, i) => {
           const m = data.months[mi];
           const hg = (m.genKWh / maxKWh) * ch;
@@ -51,7 +51,7 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
                 x={i * gw + gw * 0.14}
                 width={gw * 0.34}
                 rx={3}
-                fill="#facc15"
+                fill="#e3b341"
               />
               <motion.rect
                 initial={{ height: 0, y: top + ch }}
@@ -60,9 +60,9 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
                 x={i * gw + gw * 0.52}
                 width={gw * 0.34}
                 rx={3}
-                fill="#64748b"
+                fill="#4a4d55"
               />
-              <text x={(i + 0.5) * gw} y={H - 18} textAnchor="middle" fill="#94a3b8" fontSize={10}>
+              <text x={(i + 0.5) * gw} y={H - 18} textAnchor="middle" fill="#8b8d93" fontSize={10} fontFamily="var(--font-plex-mono)">
                 {m.month}
               </text>
             </g>
@@ -71,7 +71,7 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
         <motion.path
           d={line}
           fill="none"
-          stroke="#e2e8f0"
+          stroke="#e8e6e1"
           strokeWidth={1.5}
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
@@ -79,8 +79,8 @@ export default function SolarYear({ data }: { data: SolarYearData }) {
         />
         {order.map((mi, k) => (
           <g key={mi}>
-            <circle cx={(k + 0.5) * gw} cy={yb(-data.months[mi].netEUR)} r={4} fill={data.months[mi].netEUR < 0 ? "#34d399" : "#f87171"} />
-            <text x={(k + 0.5) * gw} y={yb(-data.months[mi].netEUR) - 8} textAnchor="middle" fontSize={10} fill={data.months[mi].netEUR < 0 ? "#6ee7b7" : "#fca5a5"}>
+            <circle cx={(k + 0.5) * gw} cy={yb(-data.months[mi].netEUR)} r={4} fill={data.months[mi].netEUR < 0 ? "#7bd88f" : "#e0705c"} />
+            <text x={(k + 0.5) * gw} y={yb(-data.months[mi].netEUR) - 8} textAnchor="middle" fontSize={10} fill={data.months[mi].netEUR < 0 ? "#7bd88f" : "#e0705c"}>
               {data.months[mi].netEUR < 0 ? `+€${-data.months[mi].netEUR}` : `−€${data.months[mi].netEUR}`}
             </text>
           </g>

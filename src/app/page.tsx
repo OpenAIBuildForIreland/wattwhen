@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
+import { BatteryCharging, Car, Fan, Heater, ShowerHead, Sun, Utensils, WashingMachine, Wind } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Hotspot, HouseConfig } from "@/components/House3D";
 import Chat from "@/components/Chat";
@@ -12,25 +13,25 @@ import type { Appliance, Household, Mode, Timeline as TimelineData, Window } fro
 
 const House3D = dynamic(() => import("@/components/House3D"), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse rounded-3xl bg-slate-900/60" />,
+  loading: () => <div className="h-full w-full bg-panel" />,
 });
 
 const fmt = new Intl.DateTimeFormat("en-IE", { timeZone: "Europe/Dublin", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const fmtDay = new Intl.DateTimeFormat("en-IE", { timeZone: "Europe/Dublin", weekday: "short" });
+const fmtClock = new Intl.DateTimeFormat("en-IE", { timeZone: "Europe/Dublin", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const when = (w: Window) => {
   const s = new Date(w.start);
-  const today = fmtDay.format(new Date());
   const d = fmtDay.format(s);
-  return `${d === today ? "Today" : d} ${fmt.format(s)}–${fmt.format(new Date(w.end))}`;
+  return `${d === fmtDay.format(new Date()) ? "Today" : d} ${fmt.format(s)}–${fmt.format(new Date(w.end))}`;
 };
 
-const ICON: Record<Appliance["kind"], string> = {
-  washer: "🧺",
-  dryer: "🌀",
-  dishwasher: "🍽️",
-  immersion: "🚿",
-  ev: "🚗",
-  heatpump: "🌡️",
+const ICON: Record<Appliance["kind"], typeof Car> = {
+  washer: WashingMachine,
+  dryer: Wind,
+  dishwasher: Utensils,
+  immersion: ShowerHead,
+  ev: Car,
+  heatpump: Fan,
 };
 const SPOT: Record<Appliance["kind"], [number, number, number]> = {
   washer: [-3.9, 2.6, 2.6],
@@ -45,9 +46,16 @@ const EV_APPLIANCE: Appliance = { id: "ev", name: "EV charge (40 kWh)", kW: 7.2,
 const HP_APPLIANCE: Appliance = { id: "heatpump", name: "Heat pump boost", kW: 2.5, hours: 3, usualStart: "17:00", kind: "heatpump" };
 
 const MODES: { id: Mode; label: string }[] = [
-  { id: "cost", label: "💶 Cost" },
-  { id: "carbon", label: "🌿 Carbon" },
-  { id: "both", label: "⚖️ Both" },
+  { id: "cost", label: "Cost" },
+  { id: "carbon", label: "Carbon" },
+  { id: "both", label: "Both" },
+];
+
+const TOGGLES: { key: keyof HouseConfig; label: string; Icon: typeof Car }[] = [
+  { key: "solar", label: "Solar", Icon: Sun },
+  { key: "ev", label: "EV", Icon: Car },
+  { key: "battery", label: "Battery", Icon: BatteryCharging },
+  { key: "heatpump", label: "Heat pump", Icon: Heater },
 ];
 
 function buildHousehold(base: Household, cfg: HouseConfig): Household {
@@ -63,14 +71,31 @@ function buildHousehold(base: Household, cfg: HouseConfig): Household {
   };
 }
 
-function Badge({ kind, children }: { kind: "data" | "estimate" | "ai" | "sample"; children: React.ReactNode }) {
-  const c = {
-    data: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-    estimate: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-    ai: "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300",
-    sample: "border-slate-400/30 bg-slate-400/10 text-slate-300",
-  }[kind];
-  return <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${c}`}>{children}</span>;
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  id,
+}: {
+  value: T;
+  options: { id: T; label: string }[];
+  onChange: (v: T) => void;
+  id: string;
+}) {
+  return (
+    <div className="flex rounded-md border border-line bg-panel p-0.5 text-sm">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          className={`relative rounded px-3 py-1 ${value === o.id ? "text-background" : "text-muted hover:text-foreground"}`}
+        >
+          {value === o.id && <motion.span layoutId={id} className="absolute inset-0 rounded bg-foreground" transition={{ type: "spring", stiffness: 400, damping: 36 }} />}
+          <span className="relative">{o.label}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -129,210 +154,165 @@ export default function Home() {
   const sunStrength = cfg.solar ? (nowSlot?.solarKW ?? 0) / maxSun : 0;
   const totalSaved = windows.reduce((s, w) => s + Math.max(0, w.savedEUR), 0);
   const totalCo2 = windows.reduce((s, w) => s + Math.max(0, w.savedCO2g), 0);
-  const usedSample = timeline?.sources.some((s) => s.usedSample);
+  const co2Source = timeline?.sources[0];
 
   const hotspots: Hotspot[] = household.appliances.map((a) => {
     const w = windows.find((x) => x.applianceId === a.id);
-    return { id: a.id, label: a.name.replace(/ \(.*\)/, ""), icon: ICON[a.kind], position: SPOT[a.kind], hint: w ? fmt.format(new Date(w.start)) : undefined };
+    const Icon = ICON[a.kind];
+    return {
+      id: a.id,
+      label: a.name.replace(/ \(.*\)/, ""),
+      icon: <Icon size={13} strokeWidth={1.75} />,
+      position: SPOT[a.kind],
+      hint: w ? fmt.format(new Date(w.start)) : undefined,
+    };
   });
 
   return (
-    <main className="min-h-screen bg-[#05070d] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.12),transparent_45%),radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.10),transparent_45%)]" />
-      <div className="relative mx-auto flex max-w-[1500px] flex-col gap-4 px-6 py-5">
-        {/* header */}
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-sky-500 text-xl shadow-[0_0_30px_rgba(52,211,153,0.45)]">⚡</div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">WattWhen</h1>
-              <p className="text-xs text-slate-400">When to use, store and sell your electricity in Ireland</p>
-            </div>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-6 py-5">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-lg font-semibold tracking-tight">WattWhen</h1>
+            <p className="text-sm text-muted">When to use, store and sell electricity in Ireland</p>
           </div>
-          <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
-            {HOUSEHOLDS.map((h) => (
-              <button
-                key={h.id}
-                onClick={() => selectHousehold(h.id)}
-                className={`relative rounded-xl px-3 py-1.5 text-sm transition-colors ${householdId === h.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
-              >
-                {householdId === h.id && <motion.span layoutId="hh" className="absolute inset-0 rounded-xl bg-emerald-400" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-                <span className="relative">{h.name}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">Optimise for</span>
-            <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
-              {MODES.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setMode(m.id)}
-                  className={`relative rounded-xl px-3 py-1.5 text-sm ${mode === m.id ? "text-slate-950" : "text-slate-300 hover:text-white"}`}
-                >
-                  {mode === m.id && <motion.span layoutId="mode" className="absolute inset-0 rounded-xl bg-sky-400" transition={{ type: "spring", stiffness: 300, damping: 30 }} />}
-                  <span className="relative">{m.label}</span>
-                </button>
-              ))}
+          <div className="flex items-center gap-4">
+            <Segmented id="hh" value={householdId} onChange={selectHousehold} options={HOUSEHOLDS.map((h) => ({ id: h.id, label: h.name }))} />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted">Optimise for</span>
+              <Segmented id="mode" value={mode} onChange={setMode} options={MODES} />
             </div>
           </div>
         </header>
 
-        {/* main */}
         <section className="grid grid-cols-12 gap-4">
-          <div className="relative col-span-12 h-[520px] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 lg:col-span-8">
+          <div className="relative col-span-12 h-[520px] overflow-hidden rounded-lg border border-line bg-panel lg:col-span-8">
             <House3D config={cfg} hotspots={hotspots} selected={selected} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
-            <div className="absolute left-4 top-4 flex flex-col gap-2">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-3 backdrop-blur-md">
+            <div className="absolute left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
                 <div className="text-sm font-medium">{base.name}</div>
-                <div className="max-w-[240px] text-xs text-slate-400">{base.blurb}</div>
-                <div className="mt-2">
-                  <Badge kind="sample">Synthetic household</Badge>
-                </div>
+                <span className="text-[11px] text-muted">synthetic</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    ["solar", "☀️ Solar"],
-                    ["ev", "🚗 EV"],
-                    ["battery", "🔋 Battery"],
-                    ["heatpump", "🌡️ Heat pump"],
-                  ] as [keyof HouseConfig, string][]
-                ).map(([k, label]) => (
+              <p className="mt-0.5 text-xs leading-relaxed text-muted">{base.blurb}</p>
+              <div className="mt-3 grid grid-cols-2 gap-1">
+                {TOGGLES.map(({ key, label, Icon }) => (
                   <button
-                    key={k}
-                    onClick={() => setCfg((c) => ({ ...c, [k]: !c[k] }))}
-                    className={`rounded-full border px-3 py-1 text-xs transition-all ${
-                      cfg[k] ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-400 hover:text-slate-200"
+                    key={key}
+                    onClick={() => setCfg((c) => ({ ...c, [key]: !c[key] }))}
+                    className={`flex items-center gap-1.5 rounded border px-2 py-1 text-xs ${
+                      cfg[key] ? "border-foreground/40 bg-foreground/10 text-foreground" : "border-line text-muted hover:text-foreground"
                     }`}
                   >
+                    <Icon size={13} strokeWidth={1.75} />
                     {label}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="absolute bottom-4 left-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-xs backdrop-blur-md">
-              <span className="text-slate-400">Grid right now</span>
-              <span className="font-mono text-base text-white">{nowSlot?.co2 ?? "–"}</span>
-              <span className="text-slate-400">gCO2/kWh</span>
-              <span className="text-slate-600">·</span>
-              <span className="font-mono text-base text-white">{nowSlot?.windMW ? (nowSlot.windMW / 1000).toFixed(1) : "–"}</span>
-              <span className="text-slate-400">GW wind</span>
-              <Badge kind={usedSample ? "sample" : "data"}>{usedSample ? "Sample data" : "Live · EirGrid"}</Badge>
+            <div className="absolute bottom-4 left-4 flex items-baseline gap-4 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
+              <span className="text-muted">Grid now</span>
+              <span>
+                <span className="font-mono text-base">{nowSlot?.co2 ?? "–"}</span> <span className="text-muted">gCO2/kWh</span>
+              </span>
+              <span>
+                <span className="font-mono text-base">{nowSlot?.windMW ? (nowSlot.windMW / 1000).toFixed(1) : "–"}</span> <span className="text-muted">GW wind</span>
+              </span>
+              <span className="text-muted">
+                {co2Source?.usedSample ? "sample data" : `EirGrid, ${co2Source ? fmtClock.format(new Date(co2Source.fetchedAt)) : "…"}`}
+              </span>
             </div>
           </div>
 
-          {/* windows */}
           <div className="col-span-12 flex h-[520px] flex-col gap-3 lg:col-span-4">
-            <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500/15 to-sky-500/10 p-4">
-              <div className="text-xs uppercase tracking-wider text-emerald-300/80">If you follow today&apos;s plan</div>
-              <div className="mt-1 flex items-baseline gap-4">
-                <motion.span key={totalSaved.toFixed(2)} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-semibold text-white">
-                  €{totalSaved.toFixed(2)}
-                </motion.span>
-                <span className="text-sm text-slate-300">saved vs your usual times</span>
-              </div>
-              <div className="mt-1 text-sm text-slate-300">
-                and <span className="font-semibold text-emerald-300">{(totalCo2 / 1000).toFixed(1)} kg</span> less CO2
+            <div className="rounded-lg border border-line bg-panel p-4">
+              <div className="text-sm text-muted">Following today&apos;s plan saves</div>
+              <div className="mt-1 flex items-baseline gap-3">
+                <span className="font-mono text-4xl font-medium">€{totalSaved.toFixed(2)}</span>
+                <span className="text-sm text-muted">
+                  and <span className="text-foreground">{(totalCo2 / 1000).toFixed(1)} kg</span> CO2 vs your usual times
+                </span>
               </div>
             </div>
-            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-              <AnimatePresence initial={false}>
-                {windows.map((w) => {
-                  const a = household.appliances.find((x) => x.id === w.applianceId);
-                  if (!a) return null;
-                  const on = selected === w.applianceId;
-                  return (
-                    <motion.button
-                      layout
-                      key={w.applianceId}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      onClick={() => setSelected(w.applianceId)}
-                      className={`w-full rounded-2xl border p-3 text-left transition-colors ${
-                        on ? "border-emerald-300/60 bg-emerald-400/10 shadow-[0_0_30px_rgba(52,211,153,0.15)]" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{ICON[a.kind]}</span>
-                          <span className="font-medium">{a.name}</span>
-                        </div>
-                        <span className="font-mono text-sm text-emerald-300">{when(w)}</span>
+            <div className="flex-1 overflow-y-auto rounded-lg border border-line bg-panel">
+              {windows.map((w) => {
+                const a = household.appliances.find((x) => x.id === w.applianceId);
+                if (!a) return null;
+                const on = selected === w.applianceId;
+                const Icon = ICON[a.kind];
+                return (
+                  <button
+                    key={w.applianceId}
+                    onClick={() => setSelected(w.applianceId)}
+                    className={`relative block w-full border-b border-line px-4 py-3 text-left last:border-b-0 ${on ? "bg-foreground/[0.04]" : "hover:bg-foreground/[0.02]"}`}
+                  >
+                    {on && <span className="absolute inset-y-0 left-0 w-0.5 bg-best" />}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Icon size={15} strokeWidth={1.75} className="text-muted" />
+                        {a.name}
                       </div>
-                      <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-300">
-                        <span>
-                          saves <b className="text-white">€{Math.max(0, w.savedEUR).toFixed(2)}</b>
-                        </span>
-                        <span>
-                          <b className="text-white">{Math.max(0, w.savedCO2g)} g</b> CO2
-                        </span>
-                        <span className="text-slate-500">vs {fmt.format(new Date(w.usual.start))}</span>
-                        {w.usesEstimate && <Badge kind="estimate">CO2 estimate</Badge>}
-                      </div>
-                      {on && <div className="mt-1.5 text-xs text-slate-400">{w.reason}</div>}
-                    </motion.button>
-                  );
-                })}
-              </AnimatePresence>
+                      <span className="font-mono text-sm text-best">{when(w)}</span>
+                    </div>
+                    <div className="mt-1 flex gap-3 pl-[23px] text-xs text-muted">
+                      <span>
+                        saves <span className="text-foreground">€{Math.max(0, w.savedEUR).toFixed(2)}</span>
+                      </span>
+                      <span>
+                        <span className="text-foreground">{Math.max(0, w.savedCO2g)} g</span> CO2
+                      </span>
+                      <span>vs usual {fmt.format(new Date(w.usual.start))}</span>
+                    </div>
+                    {on && <div className="mt-1.5 pl-[23px] text-xs leading-relaxed text-muted">{w.reason}</div>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* bottom */}
-        <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+        <section className="rounded-lg border border-line bg-panel p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1">
-              {(
-                [
-                  ["today", "Next 36 hours"],
-                  ["year", "Solar year"],
-                ] as const
-              ).map(([id, label]) => (
-                <button key={id} onClick={() => setTab(id)} className={`relative rounded-xl px-3 py-1.5 text-sm ${tab === id ? "text-slate-950" : "text-slate-300"}`}>
-                  {tab === id && <motion.span layoutId="tab" className="absolute inset-0 rounded-xl bg-white" />}
-                  <span className="relative">{label}</span>
-                </button>
-              ))}
-            </div>
+            <Segmented
+              id="tab"
+              value={tab}
+              onChange={setTab}
+              options={[
+                { id: "today", label: "Next 36 hours" },
+                { id: "year", label: "Solar year" },
+              ]}
+            />
             {tab === "today" ? (
-              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-6 rounded-sm bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-400" /> grid CO2, cleaner → dirtier
+                  <span className="h-2 w-6 rounded-sm bg-gradient-to-r from-[#5fb98a] via-[#d9b44a] to-[#d4685c]" /> grid CO2, cleaner to dirtier
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-5 border-t border-dashed border-sky-300" /> wind forecast
+                  <span className="w-5 border-t border-dashed border-[#8fb3d9]" /> wind
                 </span>
                 {cfg.solar && (
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-4 rounded-sm bg-yellow-300/60" /> your solar
+                    <span className="w-5 border-t-2 border-sun" /> your solar
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-3 rounded-sm bg-indigo-600" /> night
-                  <span className="h-2.5 w-3 rounded-sm bg-slate-700" /> day
-                  <span className="h-2.5 w-3 rounded-sm bg-rose-600" /> peak
-                  <span className="h-2.5 w-3 rounded-sm bg-emerald-600" /> EV boost
+                  <span className="h-2 w-3 rounded-sm bg-[#3d4a7a]" /> night
+                  <span className="ml-1 h-2 w-3 rounded-sm bg-[#2b2e35]" /> day
+                  <span className="ml-1 h-2 w-3 rounded-sm bg-[#8a3b33]" /> peak
+                  <span className="ml-1 h-2 w-3 rounded-sm bg-[#2f6b4f]" /> EV boost
                 </span>
-                <Badge kind="data">EirGrid · Met Éireann</Badge>
-                <Badge kind="estimate">Hatched = our CO2 estimate from wind (r² {timeline?.fit.r2 ?? "–"})</Badge>
-                <Badge kind="sample">Sample tariff</Badge>
               </div>
             ) : (
               year && (
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
                   <span>
-                    <b className="text-yellow-300">{year.totals.genKWh.toLocaleString()} kWh</b> generated
+                    <span className="font-mono text-foreground">{year.totals.genKWh.toLocaleString()}</span> kWh generated
                   </span>
                   <span>
-                    <b className="text-white">€{year.totals.exportEUR}</b> export credit
+                    <span className="font-mono text-foreground">€{year.totals.exportEUR}</span> export credit
                   </span>
                   <span>
-                    bill <b className="text-white">€{year.totals.netEUR}</b> vs <s>€{year.totals.noSolarBillEUR}</s> without solar
+                    bill <span className="font-mono text-foreground">€{year.totals.netEUR}</span> vs <span className="font-mono">€{year.totals.noSolarBillEUR}</span> without solar
                   </span>
-                  <Badge kind="data">PVGIS · EU JRC</Badge>
-                  <Badge kind="estimate">{Math.round(year.assumptions.selfUseShare * 100)}% self-use assumed</Badge>
                 </div>
               )
             )}
@@ -341,26 +321,37 @@ export default function Home() {
             timeline ? (
               <Timeline slots={timeline.slots} now={timeline.now} windows={[...windows, ...chatWindows]} selected={selected} showSolar={cfg.solar} kWp={household.solar?.kWp ?? 0} />
             ) : (
-              <div className="h-[170px] animate-pulse rounded-2xl bg-slate-900/60" />
+              <div className="h-[170px]" />
             )
           ) : year ? (
             <div>
               <SolarYear data={year} />
-              <div className="mt-1 flex gap-4 text-[11px] text-slate-400">
+              <div className="mt-1 flex gap-5 text-xs text-muted">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-3 rounded-sm bg-yellow-400" /> solar generated
+                  <span className="h-2 w-3 rounded-sm bg-sun" /> solar generated
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-3 rounded-sm bg-slate-500" /> household use
+                  <span className="h-2 w-3 rounded-sm bg-[#4a4d55]" /> household use
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-5 border-t-2 border-slate-200" /> monthly bill after export credit: <b className="text-emerald-300">green = the grid pays you</b>, red = you pay
-                </span>
+                <span>Line: monthly bill after export credit. Above zero, the grid pays you.</span>
               </div>
             </div>
           ) : (
-            <div className="h-[170px] animate-pulse rounded-2xl bg-slate-900/60" />
+            <div className="h-[170px]" />
           )}
+          <p className="mt-4 border-t border-line pt-3 text-[11px] leading-relaxed text-muted">
+            {tab === "today" ? (
+              <>
+                Sources: EirGrid Smart Grid Dashboard (CO2 intensity, wind forecast), Met Éireann (solar radiation). CO2 after now is our estimate
+                from the wind forecast (r² {timeline?.fit.r2 ?? "–"}), shown lighter. Tariff rates are samples. Households are synthetic.
+              </>
+            ) : (
+              <>
+                Source: PVGIS, EU Joint Research Centre. Assumes {year ? Math.round(year.assumptions.selfUseShare * 100) : "–"}% of solar is used at
+                home and sample tariff rates. Households are synthetic.
+              </>
+            )}
+          </p>
         </section>
       </div>
       <Chat

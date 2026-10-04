@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, RoundedBox } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 
 export type HouseConfig = {
@@ -15,7 +15,7 @@ export type HouseConfig = {
 export type Hotspot = {
   id: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
   position: [number, number, number];
   hint?: string; // e.g. "02:00–04:00"
 };
@@ -82,7 +82,7 @@ function Car() {
   return (
     <group position={[5.3, 0, 2.2]}>
       <RoundedBox args={[1.9, 0.7, 4.1]} radius={0.22} position={[0, 0.65, 0]} castShadow>
-        <meshStandardMaterial color="#0ea5e9" metalness={0.5} roughness={0.3} />
+        <meshStandardMaterial color="#4f7ea8" metalness={0.4} roughness={0.35} />
       </RoundedBox>
       <RoundedBox args={[1.65, 0.6, 2.1]} radius={0.22} position={[0, 1.2, -0.2]} castShadow>
         <meshStandardMaterial color="#0b1220" metalness={0.3} roughness={0.1} />
@@ -158,16 +158,14 @@ function HotspotButton({
       ref={setRef}
       onClick={() => onSelect(spot.id)}
       style={{ transform: "translate(-9999px,-9999px)" }}
-      className={`absolute left-0 top-0 flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium backdrop-blur-md transition-[background,border,box-shadow] ${
-        selected
-          ? "z-[2] border-emerald-300 bg-emerald-400/90 text-emerald-950 shadow-[0_0_24px_rgba(52,211,153,0.8)]"
-          : "z-[1] border-white/20 bg-slate-900/70 text-slate-100 hover:border-emerald-300/70 hover:bg-slate-800/90"
+      className={`absolute left-0 top-0 flex items-center gap-1.5 whitespace-nowrap rounded border px-2 py-1 text-[11px] ${
+        selected ? "z-[2] border-best bg-background text-foreground" : "z-[1] border-line bg-background/85 text-foreground/90 hover:border-foreground/40"
       }`}
     >
-      <span className="text-sm leading-none">{spot.icon}</span>
+      <span className="text-muted">{spot.icon}</span>
       <span>{spot.label}</span>
       {spot.hint && (
-        <span className={`rounded-full px-1.5 text-[10px] ${selected ? "bg-emerald-950/20" : "bg-emerald-400/15 text-emerald-300"}`}>
+        <span className="font-mono text-[10px] text-best">
           {spot.hint}
         </span>
       )}
@@ -207,15 +205,15 @@ export default function House3D({
   sunStrength: number; // 0..1, current solar output relative to peak
   gridCo2: number | null;
 }) {
-  const gridColor = gridCo2 === null ? "#38bdf8" : gridCo2 < 150 ? "#34d399" : gridCo2 < 250 ? "#fbbf24" : "#f87171";
+  const gridColor = gridCo2 === null ? "#8fb3d9" : gridCo2 < 150 ? "#7bd88f" : gridCo2 < 250 ? "#d9b44a" : "#d4685c";
   const sunPos: [number, number, number] = [-7, 11, 9];
   const labelRefs = useRef(new Map<string, HTMLButtonElement>());
 
   return (
     <div className="relative h-full w-full">
     <Canvas shadows camera={{ position: [11, 7.5, 13], fov: 38 }} dpr={[1, 2]}>
-      <color attach="background" args={["#0b1324"]} />
-      <fog attach="fog" args={["#0b1324", 26, 52]} />
+      <color attach="background" args={["#17181b"]} />
+      <fog attach="fog" args={["#17181b", 24, 48]} />
       <ambientLight intensity={0.55} />
       <hemisphereLight args={["#cfe3ff", "#29462f", 1.1]} />
       <directionalLight
@@ -233,14 +231,14 @@ export default function House3D({
       {/* sun */}
       <mesh position={sunPos}>
         <sphereGeometry args={[0.7, 32, 32]} />
-        <meshBasicMaterial color="#fde047" toneMapped={false} />
+        <meshBasicMaterial color="#e3b341" toneMapped={false} />
       </mesh>
 
       <group position={[0, 0, 0]}>
         {/* ground and driveway */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <circleGeometry args={[16, 64]} />
-          <meshStandardMaterial color="#2d6a3e" roughness={1} />
+          <meshStandardMaterial color="#3b5640" roughness={1} />
         </mesh>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[5.3, 0.01, 3.5]} receiveShadow>
           <planeGeometry args={[3.2, 9]} />
@@ -313,16 +311,16 @@ export default function House3D({
         {config.solar && (
           <Flow
             points={[sunPos, [-3.5, 8.5, 5], [0, 5.6, 1.6]]}
-            color="#fde047"
+            color="#e3b341"
             speed={0.18 + 0.3 * sunStrength}
             active={sunStrength > 0.02}
           />
         )}
         {config.solar && (
-          <Flow points={[[0, 5.2, 1.6], [0.5, 4.3, 2.6], [1, 3.2, 2.6]]} color="#fde047" speed={0.3} count={8} active={sunStrength > 0.02} />
+          <Flow points={[[0, 5.2, 1.6], [0.5, 4.3, 2.6], [1, 3.2, 2.6]]} color="#e3b341" speed={0.3} count={8} active={sunStrength > 0.02} />
         )}
-        {config.ev && <Flow points={[[3, 1.3, 1.6], [4.2, 1.6, 1.8], [5.3, 1.3, 2.2]]} color="#34d399" speed={0.35} count={10} />}
-        {config.battery && <Flow points={[[-3, 2.6, 1.6], [-3.4, 2, 1.4], [-3.2, 1.4, 1.2]]} color="#a78bfa" speed={0.3} count={8} />}
+        {config.ev && <Flow points={[[3, 1.3, 1.6], [4.2, 1.6, 1.8], [5.3, 1.3, 2.2]]} color="#7bd88f" speed={0.35} count={10} />}
+        {config.battery && <Flow points={[[-3, 2.6, 1.6], [-3.4, 2, 1.4], [-3.2, 1.4, 1.2]]} color="#b9a6e8" speed={0.3} count={8} />}
       </group>
 
       <Projector spots={hotspots} refs={labelRefs} />
@@ -334,8 +332,6 @@ export default function House3D({
         maxDistance={26}
         minPolarAngle={0.5}
         maxPolarAngle={1.35}
-        autoRotate
-        autoRotateSpeed={0.35}
         target={[0, 2.2, 0]}
       />
     </Canvas>

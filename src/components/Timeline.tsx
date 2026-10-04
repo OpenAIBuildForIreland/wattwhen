@@ -9,19 +9,19 @@ const fmt = new Intl.DateTimeFormat("en-IE", { timeZone: "Europe/Dublin", hour: 
 const fmtDay = new Intl.DateTimeFormat("en-IE", { timeZone: "Europe/Dublin", weekday: "short" });
 
 const BAND_COLOR: Record<Slot["band"], string> = {
-  night: "#4f46e5",
-  day: "#334155",
-  peak: "#e11d48",
-  boost: "#059669",
+  night: "#3d4a7a",
+  day: "#2b2e35",
+  peak: "#8a3b33",
+  boost: "#2f6b4f",
 };
 
 // green → amber → red, relative to the range shown
 function co2Color(v: number, min: number, max: number) {
   const t = max > min ? (v - min) / (max - min) : 0;
   const stops = [
-    [16, 185, 129],
-    [251, 191, 36],
-    [248, 113, 113],
+    [95, 185, 138],
+    [217, 180, 74],
+    [212, 104, 92],
   ];
   const seg = t < 0.5 ? 0 : 1;
   const u = t < 0.5 ? t / 0.5 : (t - 0.5) / 0.5;
@@ -94,19 +94,9 @@ export default function Timeline({
       <svg width={w} height={H} className="block overflow-visible">
         <defs>
           <linearGradient id="sun" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#fde047" stopOpacity={0.55} />
-            <stop offset="100%" stopColor="#fde047" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="#e3b341" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#e3b341" stopOpacity={0} />
           </linearGradient>
-          <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-            <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(7,10,18,0.55)" strokeWidth="2.5" />
-          </pattern>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         {/* CO2 bars */}
@@ -120,17 +110,14 @@ export default function Timeline({
                 height={chartTop + chartH - yCo2(s.co2)}
                 rx={1.5}
                 fill={co2Color(s.co2, min, max)}
-                opacity={hover === i ? 1 : 0.88}
+                opacity={(s.co2Estimated ? 0.5 : 0.95) * (hover === i ? 1.1 : 1)}
               />
-              {s.co2Estimated && (
-                <rect x={i * sw + 0.5} y={yCo2(s.co2)} width={Math.max(1, sw - 1)} height={chartTop + chartH - yCo2(s.co2)} fill="url(#hatch)" />
-              )}
             </g>
           ),
         )}
 
-        {showSolar && <path d={sunPath} fill="url(#sun)" stroke="#fde047" strokeWidth={1.2} />}
-        <path d={windPath} fill="none" stroke="#7dd3fc" strokeWidth={1.6} strokeDasharray="3 3" opacity={0.9} />
+        {showSolar && <path d={sunPath} fill="url(#sun)" stroke="#e3b341" strokeWidth={1.5} />}
+        <path d={windPath} fill="none" stroke="#8fb3d9" strokeWidth={1.25} strokeDasharray="3 3" opacity={0.8} />
 
         {/* selected window */}
         {sel && (
@@ -141,10 +128,9 @@ export default function Timeline({
             y={chartTop - 10}
             height={chartH + 10 + 26}
             rx={8}
-            fill="rgba(52,211,153,0.12)"
-            stroke="#34d399"
-            strokeWidth={2}
-            filter="url(#glow)"
+            fill="rgba(123,216,143,0.08)"
+            stroke="#7bd88f"
+            strokeWidth={1.5}
           />
         )}
         {/* usual time */}
@@ -158,11 +144,21 @@ export default function Timeline({
             height={chartH + 10 + 26}
             rx={8}
             fill="none"
-            stroke="#f87171"
-            strokeDasharray="5 4"
-            strokeWidth={1.5}
-            opacity={0.8}
+            stroke="#e0705c"
+            strokeDasharray="4 3"
+            strokeWidth={1.25}
           />
+        )}
+
+        {sel && (
+          <>
+            <motion.text initial={false} animate={{ x: x(Date.parse(sel.start)) + 5 }} transition={{ type: "spring", stiffness: 180, damping: 24 }} y={chartTop + 2} fill="#7bd88f" fontSize={10} fontWeight={500}>
+              best
+            </motion.text>
+            <motion.text initial={false} animate={{ x: x(Date.parse(sel.usual.start)) + 5 }} transition={{ type: "spring", stiffness: 180, damping: 24 }} y={chartTop + 2} fill="#e0705c" fontSize={10} fontWeight={500}>
+              usual
+            </motion.text>
+          </>
         )}
 
         {/* tariff bands */}
@@ -176,8 +172,8 @@ export default function Timeline({
           const label = fmt.format(new Date(s.start));
           return (
             <g key={`t${s.start}`}>
-              <line x1={tx} x2={tx} y1={chartTop} y2={bandY + 12} stroke="rgba(148,163,184,0.12)" />
-              <text x={tx + 3} y={H - 14} fill="#94a3b8" fontSize={10}>
+              <line x1={tx} x2={tx} y1={chartTop} y2={bandY + 12} stroke="rgba(232,230,225,0.06)" />
+              <text x={tx + 3} y={H - 14} fill="#8b8d93" fontSize={10} fontFamily="var(--font-plex-mono)">
                 {label === "00:00" ? fmtDay.format(new Date(s.start)) : label}
               </text>
             </g>
@@ -185,9 +181,9 @@ export default function Timeline({
         })}
 
         {/* now */}
-        <line x1={nowX} x2={nowX} y1={4} y2={bandY + 14} stroke="#f8fafc" strokeWidth={1.5} />
-        <circle cx={nowX} cy={4} r={3.5} fill="#f8fafc" />
-        <text x={nowX + 6} y={10} fill="#f8fafc" fontSize={10} fontWeight={600}>
+        <line x1={nowX} x2={nowX} y1={4} y2={bandY + 14} stroke="#e8e6e1" strokeWidth={1} />
+        <circle cx={nowX} cy={4} r={2.5} fill="#e8e6e1" />
+        <text x={nowX + 6} y={10} fill="#e8e6e1" fontSize={10}>
           now
         </text>
 
@@ -199,16 +195,16 @@ export default function Timeline({
 
       {hs && hover !== null && (
         <div
-          className="pointer-events-none absolute top-0 z-10 w-52 rounded-xl border border-white/10 bg-slate-950/90 p-3 text-xs text-slate-200 shadow-xl backdrop-blur"
+          className="pointer-events-none absolute top-0 z-10 w-52 rounded-md border border-line bg-background p-3 text-xs text-foreground"
           style={{ left: Math.min(Math.max(0, (hover + 0.5) * sw - 104), w - 208), transform: "translateY(-105%)" }}
         >
-          <div className="mb-1 font-semibold text-white">
+          <div className="mb-1 font-medium">
             {fmtDay.format(new Date(hs.start))} {fmt.format(new Date(hs.start))}
           </div>
           <div className="flex justify-between">
             <span>Grid CO2</span>
             <span className="font-mono">
-              {hs.co2 ?? "–"} g/kWh {hs.co2Estimated && <span className="text-amber-300">est.</span>}
+              {hs.co2 ?? "–"} g/kWh {hs.co2Estimated && <span className="text-muted">est.</span>}
             </span>
           </div>
           <div className="flex justify-between">
