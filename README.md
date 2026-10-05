@@ -12,7 +12,7 @@ Built at **OpenAI Build for Ireland** (OpenAI × Give(a)Go × Dogpatch Labs),
 
 ## Live Site
 
-[Click here](https://www.wattwhen-nine.vercel.app)
+[Click here](https://wattwhen-nine.vercel.app)
 
 ## Run it
 
