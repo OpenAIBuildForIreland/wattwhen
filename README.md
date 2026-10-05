@@ -10,6 +10,10 @@ The assistant and bill reader run on Claude Haiku 4.5.
 Built at **OpenAI Build for Ireland** (OpenAI × Give(a)Go × Dogpatch Labs),
 4 October 2026.
 
+## Live Site
+
+[Click here](https://www.wattwhen-nine.vercel.app)
+
 ## Run it
 
 ```bash
