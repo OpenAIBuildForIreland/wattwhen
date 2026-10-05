@@ -102,7 +102,7 @@ export default function Home() {
   const [householdId, setHouseholdId] = useState("default");
   const [presetId, setPresetId] = useState("default");
   const [showPresets, setShowPresets] = useState(false);
-  const [tariffOverride, setTariffOverride] = useState<string | null>(null);
+  const [rate, setRate] = useState<"flat" | "smart" | null>(null);
   const [smartSaved, setSmartSaved] = useState<number | null>(null);
   const base = HOUSEHOLDS.find((h) => h.id === householdId)!;
   const [cfg, setCfg] = useState<HouseConfig>({ solar: false, ev: false, battery: false, heatpump: false });
@@ -118,13 +118,13 @@ export default function Home() {
   const selectPreset = (id: string) => {
     setPresetId(id);
     if (id === "custom") return;
-    setTariffOverride(null);
+    setRate(null);
     const h = HOUSEHOLDS.find((x) => x.id === id)!;
     setHouseholdId(id);
     setCfg({ solar: !!h.solar, ev: !!h.ev, battery: !!h.battery, heatpump: false });
   };
 
-  // ⌘D / Ctrl+D swaps the simple Default/Custom toggle for the full demo presets.
+  // ⌘D / Ctrl+D shows the full demo presets next to the rate toggle.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
@@ -138,8 +138,9 @@ export default function Home() {
 
   const household = useMemo(() => {
     const h = buildHousehold(base, cfg);
-    return tariffOverride ? { ...h, tariffId: tariffOverride } : h;
-  }, [base, cfg, tariffOverride]);
+    if (!rate) return h;
+    return { ...h, tariffId: rate === "flat" ? "standard" : cfg.ev ? "smart-ev" : "smart-standard" };
+  }, [base, cfg, rate]);
   const tariffId = household.tariffId;
 
   useEffect(() => {
@@ -207,24 +208,26 @@ export default function Home() {
             <p className="text-sm text-muted">When to use, store and sell electricity in Ireland</p>
           </div>
           <div className="flex items-center gap-4">
-            {showPresets ? (
+            {showPresets && (
               <Segmented
                 id="hh"
                 value={presetId}
                 onChange={selectPreset}
                 options={[...HOUSEHOLDS.map((h) => ({ id: h.id, label: h.name })), { id: "custom", label: "Custom" }]}
               />
-            ) : (
-              <Segmented
-                id="hh"
-                value={presetId === "custom" ? "custom" : presetId === "default" ? "default" : ""}
-                onChange={(id) => selectPreset(id)}
-                options={[
-                  { id: "default", label: "Default rate" },
-                  { id: "custom", label: "Custom" },
-                ]}
-              />
             )}
+            <Segmented
+              id="rate"
+              value={flat ? "flat" : "smart"}
+              onChange={(r) => {
+                setRate(r);
+                setPresetId("custom");
+              }}
+              options={[
+                { id: "flat", label: "Flat rate" },
+                { id: "smart", label: "Smart rate" },
+              ]}
+            />
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted">Optimise for</span>
               <Segmented id="mode" value={mode} onChange={setMode} options={MODES} />
@@ -237,11 +240,11 @@ export default function Home() {
             <House3D config={cfg} hotspots={hotspots} selected={selected} focusTick={focusTick} onSelect={setSelected} sunStrength={sunStrength} gridCo2={nowSlot?.co2 ?? null} />
             <div className="absolute z-10 left-4 top-4 w-[260px] rounded-md border border-line bg-background/85 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">{presetId === "custom" ? "Custom household" : base.name}</div>
+                <div className="text-sm font-medium">{showPresets && presetId !== "custom" ? base.name : "Your home"}</div>
                 <span className="text-[11px] text-muted">synthetic</span>
               </div>
               <p className="mt-0.5 text-xs leading-relaxed text-muted">
-                {presetId === "custom" ? "Choose what the house has and which tariff it's on." : base.blurb}
+                {showPresets && presetId !== "custom" ? base.blurb : "Toggle what the house has. Pick flat or smart rate up top."}
               </p>
               <div className="mt-3 grid grid-cols-2 gap-1">
                 {TOGGLES.map(({ key, label, Icon }) => (
@@ -260,31 +263,6 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              {presetId === "custom" && (
-                <div className="mt-3">
-                  <div className="mb-1 text-[11px] text-muted">Tariff</div>
-                  <div className="grid grid-cols-2 gap-1">
-                    {(
-                      [
-                        ["standard", "Flat"],
-                        ["smart-standard", "Smart"],
-                      ] as const
-                    ).map(([id, label]) => (
-                      <button
-                        key={id}
-                        onClick={() => setTariffOverride(id)}
-                        className={`rounded border px-2 py-1 text-xs ${
-                          (id === "standard") === (tariffId === "standard")
-                            ? "border-foreground/40 bg-foreground/10 text-foreground"
-                            : "border-line text-muted hover:text-foreground"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
             <div className="absolute z-10 bottom-4 left-4 flex max-w-[calc(100%-2rem)] flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md border border-line bg-background/85 px-3 py-2 text-xs backdrop-blur-sm">
               <span className="text-muted">Grid now</span>
